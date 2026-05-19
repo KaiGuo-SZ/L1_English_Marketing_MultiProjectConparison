@@ -1,0 +1,2021 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>获客总表分析看板｜英语项目对比</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --line: #e2e8f0;
+        --line-strong: #cbd5f5;
+        --text: #0f172a;
+        --text-subtle: #475569;
+        --accent: #3b82f6;
+        --accent-soft: rgba(59, 130, 246, 0.12);
+        --panel: #f8fafc;
+        --chart-grid: #e5e7eb;
+        --chart-text: #0f172a;
+        --chart-subtext: #475569;
+      }
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); }
+      .container { max-width: 1680px; margin: 0 auto; padding: 24px 20px 32px; }
+      .card { border: 1px solid var(--line); background: var(--card); border-radius: 18px; padding: 16px; box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06); }
+      .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+      .title { font-size: 18px; font-weight: 900; color: var(--text); }
+      .subtle { color: var(--text-subtle); }
+      .small { font-size: 12px; }
+      .tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: #f1f5ff; }
+      .tab { border: none; background: transparent; color: var(--text-subtle); padding: 8px 14px; cursor: pointer; font-weight: 800; }
+      .tab.active { background: var(--accent-soft); color: var(--accent); }
+      .field { min-width: 0; }
+      .searchField { max-width: 280px; }
+      .field label { display: block; font-size: 12px; color: var(--text-subtle); margin-bottom: 6px; }
+      select { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 10px 12px; outline: none; }
+      select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+      .ms { position: relative; width: 100%; }
+      .msButton { width: 100%; height: 40px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 0 12px; cursor: pointer; transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease; }
+      .msButton:hover { background: #f8fafc; border-color: var(--line-strong); }
+      .msButton:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+      .msButton.isOpen { border-color: var(--accent); background: #f8fbff; }
+      .msButton .msLabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; }
+      .msButton .msMeta { color: var(--text-subtle); font-size: 12px; font-weight: 700; }
+      .msButton .msRight { display: inline-flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+      .msButton .msBadge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; border: 1px solid #dbeafe; background: #eff6ff; color: #1d4ed8; font-size: 12px; font-weight: 800; }
+      .msButton .msCaret { color: var(--text-subtle); font-size: 12px; transition: transform 120ms ease; }
+      .msButton.isOpen .msCaret { transform: rotate(180deg); }
+      .msPanel { position: absolute; left: 0; top: calc(100% + 8px); width: 100%; border-radius: 14px; border: 1px solid var(--line); background: var(--card); box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18); display: none; z-index: 50; overflow: hidden; }
+      .msPanel.open { display: block; }
+      .msHead { padding: 10px; border-bottom: 1px solid var(--line); background: var(--panel); }
+      .msHeadRow { display: flex; gap: 10px; align-items: center; }
+      .msSearch { flex: 1 1 auto; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: #ffffff; color: var(--text); padding: 0 10px; outline: none; }
+      .msSearch:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+      .msAction { height: 34px; border-radius: 10px; border: 1px solid var(--line); background: #ffffff; color: var(--text); padding: 0 10px; cursor: pointer; font-size: 12px; font-weight: 900; }
+      .msAction:hover { border-color: var(--line-strong); background: #f8fafc; }
+      .msBody { max-height: 280px; overflow: auto; }
+      .msOptions { padding: 8px; }
+      .msOpt { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; cursor: pointer; }
+      .msOpt:hover { background: #f1f5ff; }
+      .msOpt input { width: 16px; height: 16px; margin: 0; flex: 0 0 auto; }
+      .msOpt .txt { flex: 1 1 auto; font-size: 12px; font-weight: 800; color: var(--text); text-align: left; }
+      .msGroup { padding: 10px 10px 6px; font-size: 12px; font-weight: 900; color: var(--text); }
+      .msFoot { padding: 10px; border-top: 1px solid var(--line); background: var(--panel); color: var(--text-subtle); font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+      .msFoot .msCount { color: var(--text); font-weight: 800; }
+      .gridTop { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 14px; min-width: 0; }
+      .gridTop3 { grid-auto-flow: row; }
+      .gridTop2 { grid-auto-flow: row; }
+      @media (min-width: 960px) {
+        .gridTop3 { grid-template-columns: 1fr 1fr; }
+        .gridTop2 { grid-template-columns: 1fr 1fr; }
+      }
+      @media (min-width: 1280px) { .gridTop3 { grid-template-columns: 1fr 1fr 1fr; } }
+      .chartBox { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: #fbfdff; }
+      .chartHeader { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 2px 2px 10px; }
+      .chartHeader .chartName { font-size: 12px; font-weight: 900; color: var(--text); }
+      canvas { width: 100%; height: 260px; display: block; }
+      .gridDetail { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 14px; }
+      @media (min-width: 1024px) { .gridDetail { grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); } }
+      .gridDetail > .card { min-width: 0; }
+      .list { margin-top: 12px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+      .listHeader { display: grid; grid-template-columns: 1fr 72px 92px 80px; gap: 10px; padding: 10px 12px; background: #f1f5ff; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--text-subtle); }
+      .listBody { max-height: 620px; overflow: auto; }
+      .item { display: grid; grid-template-columns: 1fr 72px 92px 80px; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); cursor: pointer; font-size: 12px; color: var(--text); }
+      .item:hover { background: #f8fafc; }
+      .item.active { background: var(--accent-soft); border-bottom-color: #bfdbfe; }
+      .item .platName { font-weight: 600; }
+      input[type="text"] { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #ffffff; color: var(--text); padding: 10px 12px; outline: none; }
+      input[type="text"]:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+      .empty { display: none; margin-top: 12px; border-radius: 14px; border: 1px solid var(--line); background: #f8fafc; padding: 12px 14px; color: var(--text-subtle); }
+      .kv { display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px; margin-top: 10px; font-size: 12px; color: var(--text); }
+      .kv .k { color: var(--text-subtle); }
+      .segTabs { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: #f1f5ff; }
+      .segBtn { border: none; background: transparent; color: var(--text-subtle); padding: 7px 12px; cursor: pointer; font-weight: 800; font-size: 12px; }
+      .segBtn.active { background: var(--accent-soft); color: var(--accent); }
+      .structTop { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 12px; min-width: 0; }
+      @media (min-width: 1024px) { .structTop { grid-template-columns: 420px minmax(0, 1fr); } }
+      .structTables { display: grid; grid-template-columns: 1fr; gap: 14px; min-width: 0; }
+      .tableTitle { font-size: 12px; font-weight: 900; color: var(--text); margin-bottom: 8px; }
+      .table { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #ffffff; }
+      .tHead, .tRow { display: grid; grid-template-columns: 120px 64px 78px 92px 92px 78px 92px 88px 92px 78px; gap: 10px; align-items: center; padding: 9px 12px; }
+      .tHead { background: #f1f5ff; font-size: 12px; color: var(--text-subtle); font-weight: 800; }
+      .tRow { border-top: 1px solid var(--line); font-size: 12px; color: var(--text); }
+      .tCell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .tNum { text-align: right; font-variant-numeric: tabular-nums; }
+      .linkBtn { border: none; background: transparent; padding: 0; margin: 0; font: inherit; color: var(--accent); cursor: pointer; text-align: left; font-weight: 800; }
+      .linkBtn:hover { text-decoration: underline; }
+      .mark { display: inline-block; padding: 1px 7px; border-radius: 999px; line-height: 18px; }
+      .hi { background: rgba(22, 163, 74, 0.12); color: #166534; }
+      .lo { background: rgba(220, 38, 38, 0.12); color: #991b1b; }
+      .legend { display: inline-flex; gap: 10px; align-items: center; font-size: 12px; font-weight: 800; color: var(--text-subtle); }
+      .dot { width: 10px; height: 10px; border-radius: 999px; border: 1px solid var(--line); display: inline-block; }
+      .dot.std { background: #3b82f6; border-color: rgba(59, 130, 246, 0.25); }
+      .dot.non { background: #f97316; border-color: rgba(249, 115, 22, 0.25); }
+      .structTop .chartBox { display: flex; flex-direction: column; }
+      #structShare { flex: 1 1 auto; height: 100%; min-height: 360px; }
+      .drillCard { margin-top: 14px; }
+      .drillHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+      .drillTitle { font-size: 14px; font-weight: 900; color: var(--text); }
+      .closeBtn { border: 1px solid var(--line); background: #ffffff; border-radius: 10px; padding: 6px 10px; font-weight: 900; font-size: 12px; color: var(--text-subtle); cursor: pointer; }
+      .closeBtn:hover { background: #f8fafc; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <div class="row" style="justify-content: space-between; align-items: baseline;">
+          <div>
+            <div class="title">获客总表分析看板｜英语项目对比</div>
+            <div class="subtle small" id="projectHint"></div>
+          </div>
+          <div style="text-align: right;">
+            <div id="dataStatus" class="subtle" style="font-size: 14px;"></div>
+            <div id="dataScope" class="subtle small"></div>
+          </div>
+        </div>
+ 
+        <div class="row" style="margin-top: 12px; justify-content: space-between;">
+          <div class="tabs">
+            <button id="tabStructure" class="tab">渠道结构</button>
+            <button id="tabStandard" class="tab">标准渠道</button>
+            <button id="tabNonStandard" class="tab">非标渠道</button>
+          </div>
+          <div class="row" style="gap: 12px;">
+            <div class="field" style="width: 220px;">
+              <label for="yearMsBtn">年度</label>
+              <div id="yearMs" class="ms">
+                <button id="yearMsBtn" type="button" class="msButton">
+                  <span style="display:flex; flex-direction:column; gap:2px; min-width: 0;">
+                    <span class="msMeta">年度</span>
+                    <span id="yearMsLabel" class="msLabel">全部</span>
+                  </span>
+                  <span class="msRight">
+                    <span id="yearMsBadge" class="msBadge" style="display:none;"></span>
+                    <span class="msCaret">▾</span>
+                  </span>
+                </button>
+                <div id="yearMsPanel" class="msPanel">
+                  <div class="msHead">
+                    <div class="msHeadRow">
+                      <input id="yearMsSearch" class="msSearch" type="text" placeholder="搜索年度" />
+                      <button id="yearMsSelectAll" type="button" class="msAction">全选</button>
+                      <button id="yearMsClear" type="button" class="msAction">清空</button>
+                    </div>
+                  </div>
+                  <div class="msBody"><div id="yearMsOptions" class="msOptions"></div></div>
+                  <div class="msFoot">
+                    <div id="yearMsCount" class="msCount"></div>
+                    <div>Enter/Space 勾选，Esc 关闭</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="field" style="width: 220px;">
+              <label for="monthMsBtn">月</label>
+              <div id="monthMs" class="ms">
+                <button id="monthMsBtn" type="button" class="msButton">
+                  <span style="display:flex; flex-direction:column; gap:2px; min-width: 0;">
+                    <span class="msMeta">月份</span>
+                    <span id="monthMsLabel" class="msLabel">全部</span>
+                  </span>
+                  <span class="msRight">
+                    <span id="monthMsBadge" class="msBadge" style="display:none;"></span>
+                    <span class="msCaret">▾</span>
+                  </span>
+                </button>
+                <div id="monthMsPanel" class="msPanel">
+                  <div class="msHead">
+                    <div class="msHeadRow">
+                      <input id="monthMsSearch" class="msSearch" type="text" placeholder="搜索月份（如 3）" />
+                      <button id="monthMsSelectAll" type="button" class="msAction">全选</button>
+                      <button id="monthMsClear" type="button" class="msAction">清空</button>
+                    </div>
+                  </div>
+                  <div class="msBody"><div id="monthMsOptions" class="msOptions"></div></div>
+                  <div class="msFoot">
+                    <div id="monthMsCount" class="msCount"></div>
+                    <div>Enter/Space 勾选，Esc 关闭</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="field" style="width: 220px;">
+              <label for="projectPeriodMsBtn">营期（项目+期，多选）</label>
+              <div id="projectPeriodMs" class="ms">
+                <button id="projectPeriodMsBtn" type="button" class="msButton">
+                  <span style="display:flex; flex-direction:column; gap:2px; min-width: 0;">
+                    <span class="msMeta">营期</span>
+                    <span id="projectPeriodMsLabel" class="msLabel">默认最新3期</span>
+                  </span>
+                  <span class="msRight">
+                    <span id="projectPeriodMsBadge" class="msBadge" style="display:none;"></span>
+                    <span class="msCaret">▾</span>
+                  </span>
+                </button>
+                <div id="projectPeriodMsPanel" class="msPanel">
+                  <div class="msHead">
+                    <div class="msHeadRow">
+                      <input id="projectPeriodMsSearch" class="msSearch" type="text" placeholder="搜索：项目或期（如 英语 / 13）" />
+                      <button id="projectPeriodMsSelectAll" type="button" class="msAction">全选</button>
+                      <button id="projectPeriodMsClear" type="button" class="msAction">清空</button>
+                    </div>
+                  </div>
+                  <div class="msBody"><div id="projectPeriodMsOptions" class="msOptions"></div></div>
+                  <div class="msFoot">
+                    <div id="projectPeriodMsCount" class="msCount"></div>
+                    <div>Enter/Space 勾选，Esc 关闭</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+ 
+      <div id="compareSection">
+        <div class="card" style="margin-top: 14px;">
+          <div class="row" style="justify-content: space-between; align-items: baseline;">
+            <div style="font-size: 16px; font-weight: 900;">渠道总览</div>
+            <div id="overviewMeta" class="subtle small"></div>
+          </div>
+          <div class="gridTop gridTop3">
+            <div class="chartBox">
+              <div class="chartHeader">
+                <div class="chartName">ROI</div>
+                <div class="subtle small">L1总产值 / 投放总成本</div>
+              </div>
+              <canvas id="ovROI"></canvas>
+            </div>
+            <div class="chartBox">
+              <div class="chartHeader">
+                <div class="chartName">添加产值</div>
+                <div class="subtle small">L1总产值 / 添加数</div>
+              </div>
+              <canvas id="ovAddValue"></canvas>
+            </div>
+            <div class="chartBox">
+              <div class="chartHeader">
+                <div class="chartName">获客成本（CAC）</div>
+                <div class="subtle small">投放总成本 / 获客量</div>
+              </div>
+              <canvas id="ovCAC"></canvas>
+            </div>
+            <div class="chartBox">
+              <div class="chartHeader">
+                <div class="chartName">获客量占比</div>
+                <div class="subtle small">同项目同期：该渠道获客量 / 全渠道获客量</div>
+              </div>
+              <canvas id="ovLeadShare"></canvas>
+            </div>
+            <div class="chartBox">
+              <div class="chartHeader">
+                <div class="chartName">转率</div>
+                <div class="subtle small">L1总单量 / 添加数</div>
+              </div>
+              <canvas id="ovConv"></canvas>
+            </div>
+            <div class="chartBox">
+              <div class="chartHeader">
+                <div class="chartName">添加率</div>
+                <div class="subtle small">添加数 / 获客量</div>
+              </div>
+              <canvas id="ovAddRate"></canvas>
+            </div>
+          </div>
+        </div>
+ 
+        <div class="gridDetail">
+          <div class="card">
+            <div class="row" style="justify-content: space-between; align-items: baseline;">
+              <div style="font-size: 14px; font-weight: 900;">投放平台总览</div>
+              <div class="subtle small">点击平台查看明细</div>
+            </div>
+            <div style="margin-top: 12px;" class="field searchField">
+              <label for="searchInput">搜索平台</label>
+              <input id="searchInput" type="text" placeholder="输入平台关键字" />
+            </div>
+            <div id="leftEmptyHint" class="empty"></div>
+            <div class="list">
+              <div class="listHeader">
+                <div>投放平台</div>
+                <div style="text-align:right;">项目数</div>
+                <div style="text-align:right;">获客量</div>
+                <div style="text-align:right;">ROI</div>
+              </div>
+              <div id="platformList" class="listBody"></div>
+            </div>
+          </div>
+ 
+          <div class="card">
+            <div class="row" style="justify-content: space-between; align-items: baseline;">
+              <div style="font-size: 16px; font-weight: 900;">平台明细</div>
+              <div id="activePlatformLabel" class="subtle small"></div>
+            </div>
+            <div id="rightEmptyHint" class="empty"></div>
+            <div class="kv" id="platformMeta"></div>
+            <div class="gridTop gridTop2" style="margin-top: 12px;">
+              <div class="chartBox">
+                <div class="chartHeader">
+                  <div class="chartName">ROI</div>
+                  <div class="subtle small">项目维度</div>
+                </div>
+                <canvas id="plROI"></canvas>
+              </div>
+              <div class="chartBox">
+                <div class="chartHeader">
+                  <div class="chartName">添加产值</div>
+                  <div class="subtle small">L1总产值 / 添加数</div>
+                </div>
+                <canvas id="plAddValue"></canvas>
+              </div>
+              <div class="chartBox">
+                <div class="chartHeader">
+                  <div class="chartName">获客成本（CAC）</div>
+                  <div class="subtle small">项目维度</div>
+                </div>
+                <canvas id="plCAC"></canvas>
+              </div>
+              <div class="chartBox">
+                <div class="chartHeader">
+                  <div class="chartName">获客量占比</div>
+                  <div class="subtle small">项目内：该平台在该项目该期获客量 / 该项目该期获客总量</div>
+                </div>
+                <canvas id="plLeadShare"></canvas>
+              </div>
+              <div class="chartBox">
+                <div class="chartHeader">
+                  <div class="chartName">转率</div>
+                  <div class="subtle small">项目维度</div>
+                </div>
+                <canvas id="plConv"></canvas>
+              </div>
+              <div class="chartBox">
+                <div class="chartHeader">
+                  <div class="chartName">添加率</div>
+                  <div class="subtle small">添加数 / 获客量</div>
+                </div>
+                <canvas id="plAddRate"></canvas>
+              </div>
+            </div>
+            <div class="card small subtle" style="margin-top: 14px;">
+              <div style="font-weight: 900; color: var(--text); margin-bottom: 8px;">口径说明</div>
+              <div class="row">
+                <div style="flex: 1 1 380px;">ROI = L1总产值 / 投放总成本</div>
+                <div style="flex: 1 1 380px;">CAC = 投放总成本 / 获客量</div>
+                <div style="flex: 1 1 380px;">转率 = L1总单量 / 添加数</div>
+                <div style="flex: 1 1 380px;">添加产值 = L1总产值 / 添加数</div>
+                <div style="flex: 1 1 380px;">添加率 = 添加数 / 获客量</div>
+                <div style="flex: 2 1 520px;">获客量占比：总览为该项目内各期占比（各项目各自为 100%）；平台明细为该平台在该项目该期获客量 / 该项目该期获客总量</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="structureSection" style="display:none;">
+        <div class="card" style="margin-top: 14px;">
+          <div class="row" style="justify-content: space-between; align-items: baseline;">
+            <div style="font-size: 16px; font-weight: 900;">渠道结构</div>
+          </div>
+          <div class="structTop">
+            <div class="chartBox">
+              <div class="chartHeader">
+                <div>
+                  <div class="chartName">标准/非标占比</div>
+                  <div class="subtle small">按项目（获客量）</div>
+                </div>
+                <div class="legend">
+                  <span><span class="dot std"></span> 标准</span>
+                  <span><span class="dot non"></span> 非标</span>
+                </div>
+              </div>
+              <canvas id="structShare"></canvas>
+            </div>
+            <div class="structTables">
+              <div>
+                <div class="tableTitle">整体</div>
+                <div class="table" id="structTableOverall"></div>
+              </div>
+              <div>
+                <div class="tableTitle">标准</div>
+                <div class="table" id="structTableStd"></div>
+              </div>
+              <div>
+                <div class="tableTitle">非标</div>
+                <div class="table" id="structTableNon"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="structDrillCard" class="card drillCard" style="display:none;">
+          <div class="drillHead">
+            <div id="structDrillTitle" class="drillTitle"></div>
+            <button id="structDrillClose" type="button" class="closeBtn">关闭</button>
+          </div>
+          <div style="margin-top: 12px;">
+            <div class="table" id="structDrillTable"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top: 14px;">
+          <div class="row" style="justify-content: space-between; align-items: baseline;">
+            <div style="font-size: 16px; font-weight: 900;">指标对比</div>
+            <div class="subtle small">标准 vs 非标（按项目）</div>
+          </div>
+          <div class="gridTop gridTop2" style="margin-top: 12px;">
+            <div class="chartBox">
+              <div class="chartHeader">
+                <div class="chartName">ROI</div>
+                <div class="legend">
+                  <span><span class="dot std"></span> 标准</span>
+                  <span><span class="dot non"></span> 非标</span>
+                </div>
+              </div>
+              <canvas id="structROI"></canvas>
+            </div>
+            <div class="chartBox">
+              <div class="chartHeader">
+                <div class="chartName">转率</div>
+                <div class="legend">
+                  <span><span class="dot std"></span> 标准</span>
+                  <span><span class="dot non"></span> 非标</span>
+                </div>
+              </div>
+              <canvas id="structConv"></canvas>
+            </div>
+            <div class="chartBox">
+              <div class="chartHeader">
+                <div class="chartName">获客成本（CAC）</div>
+                <div class="legend">
+                  <span><span class="dot std"></span> 标准</span>
+                  <span><span class="dot non"></span> 非标</span>
+                </div>
+              </div>
+              <canvas id="structCAC"></canvas>
+            </div>
+            <div class="chartBox">
+              <div class="chartHeader">
+                <div class="chartName">添加产值</div>
+                <div class="legend">
+                  <span><span class="dot std"></span> 标准</span>
+                  <span><span class="dot non"></span> 非标</span>
+                </div>
+              </div>
+              <canvas id="structAddValue"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <script>
+      window.__DASHBOARD_DATA__ = {"meta":{"generatedAt":"2026-05-19T17:48:18","projectWhitelist":["梓洋英语","白璇英语"],"schema":["channelBucket","project","platform","year","month","periodNum","cost","leads","adds","l1Orders","l1Value"],"source":"/Users/kaiguo/Desktop/AI学习/TRAE_WORK/Project_014_获客总表分析/数据/英语项目获客总表.csv"},"audit":{"input_rows":1144,"kept_rows":1144,"excluded_platform_rows":0,"excluded_project_rows":0,"excluded_period_rows":0},"dicts":{"channelBucket":["标准渠道","非标渠道"],"project":["梓洋英语","白璇英语"],"platform":["BJ-凌云","BJ-初夏","BJ-千帆","BJ-卓然","BJ-双宁","BJ-吉祥","BJ-启蒙","BJ-夏天","BJ-奇萌","BJ-如意","BJ-宁静","BJ-小晓","BJ-居中","BJ-文一子","BJ-文文","BJ-春天","BJ-春暖花开","BJ-流利说","BJ-满天星","BJ-瑞盈","BJ-石头","BJ-轻荷","BJ-邵邵","BJ-金晨","BJ-锦鲤","LN-公司B","QQ-JST","QQ-JY","QQ-LT","QQ-QTX","QQ-Zilo","QQ-传音","QQ-傅睿","QQ-启乐","QQ-唯一","QQ-天池","QQ-姜蒜","QQ-学习","QQ-客家","QQ-小象","QQ-岩泰","QQ-崔","QQ-度星选","QQ-恋恋","QQ-攸挽","QQ-春秋","QQ-智行","QQ-智风","QQ-每每","QQ-毓-英语","QQ-水滴","QQ-沙砾","QQ-泽南","QQ-泽堂","QQ-泽英","QQ-洞察","QQ-清泉","QQ-牛马","QQ-盾牌","QQ-盾牌回传","QQ-范老师","QQ-蜥蜴","QQ-诚心","QQ-都波","QQ-雪英","QQ-骏量","QQ-骏马","QQ-龙华","SZ-丰年","SZ-丹青","SZ-丽水","SZ-云帆","SZ-众启","SZ-依然","SZ-卫占","SZ-成功","SZ-数人","SZ-方德","SZ-曹杰","SZ-瑞雪","SZ-生光","SZ-精灵","SZ-繁星","SZ-蓝天","SZ-金数据","【限】QQ-JST","信息流-视频号","向阳-小绿书","向阳-弹窗","向阳-私域","向阳-首页banner","小红书信息流","小红书信息流-小程序","小红书信息流-私信","小红书信息流-表单","小红书直播","广点通信息流-视频号","广点通直播-视频号","广点通直播-视频号达播","快手信息流","快手直播","抖音信息流","百度信息流","直播-小风车","直播-电商","直播-视频号","直播-视频号达播","票圈小程序"]},"rows":[[0,0,104,-1,-1,1,35104.0,627,371,13,24840.0],[0,1,91,-1,-1,4,694.58,5,3,0,0.0],[0,1,91,-1,-1,5,1567.14,3,3,0,0.0],[0,1,94,-1,-1,5,46.18,3,2,0,0.0],[0,1,96,-1,-1,5,60367.3,437,326,5,8839.2],[0,1,100,-1,-1,5,0.0,1,1,0,0.0],[0,1,91,-1,-1,6,60.27,0,0,0,0.0],[0,1,92,-1,-1,6,1.49,6,4,0,0.0],[0,1,93,-1,-1,6,2492.82,14,12,1,1880.0],[0,1,94,-1,-1,6,1430.39,3,2,0,0.0],[0,1,96,-1,-1,6,125094.74,935,761,21,39100.0],[0,1,97,-1,-1,6,78532.82,433,374,22,40003.3],[0,1,101,-1,-1,6,21630.52,114,68,2,3974.0],[0,1,91,-1,-1,7,2974.06,7,7,0,0.0],[0,1,92,-1,-1,7,0.0,3,2,0,0.0],[0,1,93,-1,-1,7,2006.6,6,3,0,0.0],[0,1,94,-1,-1,7,3014.05,9,7,0,0.0],[0,1,96,-1,-1,7,64032.63,424,353,24,46144.0],[0,1,97,-1,-1,7,111176.33,738,652,22,40833.8],[0,1,101,-1,-1,7,10346.82,81,54,2,3941.0],[0,1,102,-1,-1,7,0.0,29,19,0,0.0],[0,1,91,-1,-1,8,2838.83,6,5,0,0.0],[0,1,92,-1,-1,8,2553.62,8,7,0,0.0],[0,1,93,-1,-1,8,3716.59,10,8,1,1680.0],[0,1,94,-1,-1,8,2444.41,4,4,0,0.0],[0,1,96,-1,-1,8,4179.21,36,29,3,5676.0],[0,1,97,-1,-1,8,68411.87,443,393,10,18544.3],[0,1,99,-1,-1,8,0.0,633,633,3,5640.0],[0,1,101,-1,-1,8,9825.03,95,75,0,95.0],[0,1,102,-1,-1,8,0.0,107,96,0,0.0],[0,1,91,-1,-1,9,218.56,0,0,0,0.0],[0,1,92,-1,-1,9,68.83,0,0,0,0.0],[0,1,93,-1,-1,9,4752.24,11,9,0,0.0],[0,1,94,-1,-1,9,792.99,0,0,0,0.0],[0,1,96,-1,-1,9,34937.5,317,255,7,15177.0],[0,1,97,-1,-1,9,5379.3,190,166,7,13879.0],[0,1,98,-1,-1,9,12.65,1,0,0,0.0],[0,1,99,-1,-1,9,0.0,424,395,0,109.0],[0,1,100,-1,-1,9,0.0,2,2,0,0.2],[0,1,101,-1,-1,9,6854.5,78,59,0,78.0],[0,1,102,-1,-1,9,0.0,170,152,3,7040.0],[0,1,104,-1,-1,9,4835.0,79,7,4,7320.0],[0,1,93,-1,-1,10,12298.86,47,43,3,4240.0],[0,1,94,-1,-1,10,668.84,2,1,0,0.0],[0,1,95,-1,-1,10,0.0,2,0,0,0.0],[0,1,96,-1,-1,10,37416.49,252,199,6,10632.0],[0,1,97,-1,-1,10,8460.24,33,28,1,1413.0],[0,1,98,-1,-1,10,524.94,8,8,0,0.0],[0,1,99,-1,-1,10,0.0,586,585,6,9201.0],[0,1,100,-1,-1,10,0.0,390,390,2,2360.0],[0,1,103,-1,-1,10,0.0,1,0,0,1.0],[0,1,104,-1,-1,10,6819.0,86,63,2,3560.0],[0,1,107,-1,-1,10,1064.99,12,12,1,2180.0],[0,1,93,-1,-1,11,6449.01,22,17,0,0.0],[0,1,94,-1,-1,11,920.44,1,1,0,0.0],[0,1,96,-1,-1,11,81367.95,531,439,17,29691.0],[0,1,97,-1,-1,11,5634.41,147,127,4,7335.6],[0,1,98,-1,-1,11,0.0,1,0,0,0.0],[0,1,99,-1,-1,11,0.0,31,19,0,30.0],[0,1,100,-1,-1,11,0.0,1254,1254,9,18820.0],[0,1,104,-1,-1,11,27856.0,488,316,9,14840.0],[0,1,107,-1,-1,11,1411.15,12,12,1,2180.0],[0,1,93,-1,-1,12,12404.72,60,46,1,2180.0],[0,1,94,-1,-1,12,897.75,1,1,0,0.0],[0,1,96,-1,-1,12,27398.15,222,187,4,6042.0],[0,1,97,-1,-1,12,10111.11,76,67,1,1887.6],[0,1,99,-1,-1,12,0.0,165,159,1,1721.0],[0,1,100,-1,-1,12,0.0,266,266,2,3860.0],[0,1,101,-1,-1,12,0.0,1,1,0,1.0],[0,1,104,-1,-1,12,29015.0,441,196,9,22440.0],[0,1,107,-1,-1,12,2111.88,14,14,0,0.0],[0,1,93,-1,-1,13,3268.29,12,10,0,0.0],[0,1,94,-1,-1,13,3.43,0,0,0,0.0],[0,1,96,-1,-1,13,13402.98,106,82,3,5246.0],[0,1,99,-1,-1,13,0.0,0,0,0,0.0],[0,1,104,-1,-1,13,0.0,9,9,1,1380.0],[0,1,107,-1,-1,13,1951.41,20,20,0,0.0],[0,1,98,-1,-1,14,83.63,0,0,0,0.0],[0,1,100,-1,-1,14,0.0,92,92,2,4060.0],[0,1,104,-1,-1,14,0.0,3,2,0,0.0],[0,1,107,-1,-1,14,9551.46,111,111,3,4060.0],[0,1,94,-1,-1,15,1.98,0,0,0,0.0],[0,1,99,-1,-1,15,0.0,9,8,1,1880.9],[0,1,100,-1,-1,15,2408.92,379,379,2,3560.0],[0,1,104,-1,-1,15,20511.0,349,196,10,19400.0],[0,1,107,-1,-1,15,17711.57,213,213,7,11760.0],[0,1,94,-1,-1,16,3.18,0,0,0,0.0],[0,1,99,-1,-1,16,0.0,128,96,1,2192.8],[0,1,100,-1,-1,16,0.0,594,594,7,12060.0],[0,1,104,-1,-1,16,22873.0,380,214,6,10880.0],[0,1,107,-1,-1,16,10245.88,132,132,1,2380.0],[0,1,94,-1,-1,17,2.62,0,0,0,0.0],[0,1,99,-1,-1,17,0.0,3,1,0,0.0],[0,1,100,-1,-1,17,0.0,121,121,0,0.0],[0,1,104,-1,-1,17,19734.0,363,213,11,19380.0],[0,1,107,-1,-1,17,12687.03,137,137,7,12760.0],[0,1,94,-1,-1,18,1.5,0,0,0,0.0],[0,1,96,-1,-1,18,0.0,86,70,1,2766.0],[0,1,99,-1,-1,18,0.0,8,7,0,0.8],[0,1,100,-1,-1,18,0.0,577,577,4,8220.0],[0,1,102,-1,-1,18,0.0,50,38,0,11.3],[0,1,104,-1,-1,18,44156.0,822,363,10,18500.0],[0,1,107,-1,-1,18,18895.67,212,212,3,4940.0],[0,1,94,-1,-1,19,22.94,1,0,0,0.0],[0,1,96,-1,-1,19,2265.09,71,52,2,3331.0],[0,1,99,-1,-1,19,0.0,18,17,0,0.1],[0,1,100,-1,-1,19,0.0,318,318,3,4440.0],[0,1,102,-1,-1,19,0.0,100,81,1,1916.1],[0,1,104,-1,-1,19,23114.0,417,235,7,11260.0],[0,1,107,-1,-1,19,7768.39,73,73,5,7900.0],[0,1,94,-1,-1,20,1.12,0,0,0,0.0],[0,1,96,-1,-1,20,6671.47,89,69,2,2849.0],[0,1,97,-1,-1,20,0.0,2,0,0,0.2],[0,1,98,-1,-1,20,57.17,0,0,0,0.0],[0,1,99,-1,-1,20,0.0,14,14,1,2680.0],[0,1,100,-1,-1,20,0.0,352,352,4,6120.0],[0,1,102,-1,-1,20,0.0,26,22,1,2706.0],[0,1,104,-1,-1,20,27950.0,509,315,9,17820.0],[0,1,107,-1,-1,20,10008.4,99,99,1,1380.0],[0,1,96,-1,-1,21,0.0,13,8,0,13.0],[0,1,98,-1,-1,21,24197.87,203,173,5,8520.3],[0,1,100,-1,-1,21,0.0,336,336,7,11460.0],[0,1,102,-1,-1,21,0.0,109,89,3,6794.1],[0,1,104,-1,-1,21,75930.0,1375,816,19,38200.0],[0,1,107,-1,-1,21,12158.01,124,124,3,5940.0],[0,1,86,-1,-1,22,0.0,9,7,1,1380.0],[0,1,93,-1,-1,22,0.0,0,0,0,0.0],[0,1,100,-1,-1,22,0.0,192,192,1,1780.0],[0,1,102,-1,-1,22,0.0,35,29,0,33.2],[0,1,104,-1,-1,22,71356.0,1278,679,12,21260.0],[0,1,105,-1,-1,22,9.69,0,0,0,0.0],[0,1,106,-1,-1,22,17844.86,133,117,6,11393.3],[0,1,107,-1,-1,22,18517.8,243,243,6,10880.0],[0,1,86,-1,-1,23,0.0,16,13,1,1896.0],[0,1,93,-1,-1,23,10.58,0,0,0,0.0],[0,1,94,-1,-1,23,2.24,0,0,0,0.0],[0,1,100,-1,-1,23,2658.93,146,146,1,2180.0],[0,1,102,-1,-1,23,0.0,22,19,0,22.0],[0,1,104,-1,-1,23,26386.0,473,312,17,26600.0],[0,1,105,-1,-1,23,13.7,0,0,0,0.0],[0,1,106,-1,-1,23,15386.42,129,111,3,5452.9],[0,1,107,-1,-1,23,10395.29,195,195,5,6140.0],[0,1,93,-1,-1,24,349.97,2,1,0,0.0],[0,1,100,-1,-1,24,0.0,83,83,0,0.0],[0,1,104,-1,-1,24,93652.0,1715,822,27,49460.0],[0,1,106,-1,-1,24,15909.89,150,120,4,7835.0],[0,1,107,-1,-1,24,13666.4,120,120,2,4560.0],[0,1,93,-1,-1,25,765.11,1,0,0,0.0],[0,1,100,-1,-1,25,0.0,82,82,0,0.0],[0,1,104,-1,-1,25,27150.0,513,339,15,26600.0],[0,1,105,-1,-1,25,4945.56,36,34,2,2763.6],[0,1,106,-1,-1,25,5436.26,66,55,0,6.6],[0,1,107,-1,-1,25,10674.52,132,132,2,4060.0],[0,1,93,-1,-1,26,657.13,2,1,0,0.0],[0,1,94,-1,-1,26,1.02,0,0,0,0.0],[0,1,96,-1,-1,26,2581.27,14,12,0,14.0],[0,1,97,-1,-1,26,3957.32,28,26,1,1382.8],[0,1,98,-1,-1,26,3715.13,53,43,1,3185.3],[0,1,100,-1,-1,26,324.64,91,91,1,1880.0],[0,1,104,-1,-1,26,28010.0,513,317,12,16000.0],[0,1,107,-1,-1,26,5456.54,74,74,0,400.0],[0,1,93,-1,-1,27,202.96,2,2,0,0.0],[0,1,96,-1,-1,27,14353.59,91,74,0,91.0],[0,1,97,-1,-1,27,0.46,0,0,0,0.0],[0,1,98,-1,-1,27,1226.68,6,5,0,0.6],[0,1,100,-1,-1,27,2356.97,158,158,3,5040.0],[0,1,104,-1,-1,27,38211.0,705,436,13,21740.0],[0,1,107,-1,-1,27,6056.7,72,72,2,3760.0],[0,1,97,-1,-1,28,0.57,0,0,0,0.0],[0,1,98,-1,-1,28,1422.48,19,15,0,1.9],[0,1,100,-1,-1,28,1877.86,98,98,1,2380.0],[0,1,104,-1,-1,28,28745.0,524,274,9,14720.0],[0,1,107,-1,-1,28,2023.44,18,18,0,0.0],[0,1,97,-1,-1,29,0.75,0,0,0,0.0],[0,1,98,-1,-1,29,1608.98,17,12,0,1.7],[0,1,100,-1,-1,29,0.0,109,109,1,2680.0],[0,1,104,-1,-1,29,34466.0,619,335,15,28300.0],[0,1,107,-1,-1,29,1270.45,11,11,0,0.0],[0,1,100,-1,-1,30,0.0,80,71,0,0.0],[0,1,104,-1,-1,30,34494.0,635,361,11,21980.0],[0,1,107,-1,-1,30,3415.47,38,38,0,0.0],[0,1,100,-1,-1,31,0.0,41,39,1,1380.0],[0,1,104,-1,-1,31,36367.0,647,353,4,8320.0],[0,1,107,-1,-1,31,2693.24,30,30,0,0.0],[0,1,100,-1,-1,32,0.0,51,43,0,0.0],[0,1,102,-1,-1,32,0.0,5,5,0,0.0],[0,1,104,-1,-1,32,36480.3,667,395,6,13780.0],[0,1,107,-1,-1,32,2281.16,22,22,0,0.0],[0,1,100,-1,-1,33,0.0,79,75,0,0.0],[0,1,102,-1,-1,33,0.0,5,4,0,0.0],[0,1,104,-1,-1,33,15169.0,827,344,0,0.0],[0,1,107,-1,-1,33,0.0,6,6,0,0.0],[1,0,4,-1,-1,1,1610.0,122,122,0,0.0],[1,0,12,-1,-1,1,3760.0,38,38,2,3760.0],[1,0,29,-1,-1,1,6620.0,69,69,4,6620.0],[1,0,39,-1,-1,1,210.0,7,7,0,0.0],[1,0,46,-1,-1,1,4440.0,56,56,3,4440.0],[1,0,79,-1,-1,1,3860.0,75,75,2,3860.0],[1,1,5,-1,-1,1,1740.0,58,58,0,0.0],[1,1,9,-1,-1,1,150.0,5,5,0,0.0],[1,1,25,-1,-1,1,7450.0,298,298,2,3560.0],[1,1,28,-1,-1,1,1700.0,68,68,0,0.0],[1,1,36,-1,-1,1,9000.0,92,92,5,9000.0],[1,1,48,-1,-1,1,1380.0,31,31,1,1380.0],[1,1,64,-1,-1,1,2430.0,81,81,0,0.0],[1,1,74,-1,-1,1,1470.0,49,49,0,0.0],[1,1,76,-1,-1,1,510.0,17,17,0,0.0],[1,1,80,-1,-1,1,480.0,16,16,0,0.0],[1,1,84,-1,-1,1,5610.0,187,187,1,2180.0],[1,1,5,-1,-1,2,180.0,6,6,0,0.0],[1,1,7,-1,-1,2,1680.0,26,26,1,1680.0],[1,1,9,-1,-1,2,1680.0,50,50,1,1680.0],[1,1,13,-1,-1,2,1880.0,46,46,1,1880.0],[1,1,28,-1,-1,2,200.0,8,8,0,0.0],[1,1,36,-1,-1,2,270.0,9,9,0,0.0],[1,1,48,-1,-1,2,1380.0,2,2,1,1380.0],[1,1,64,-1,-1,2,1050.0,35,35,0,0.0],[1,1,73,-1,-1,2,18600.0,441,441,10,18600.0],[1,1,76,-1,-1,2,360.0,12,12,0,0.0],[1,1,80,-1,-1,2,1380.0,22,22,1,1380.0],[1,1,83,-1,-1,2,1530.0,51,51,0,0.0],[1,1,84,-1,-1,2,7140.0,238,238,2,3560.0],[1,1,4,-1,-1,3,10880.0,81,81,6,10880.0],[1,1,5,-1,-1,3,5070.0,169,169,2,3060.0],[1,1,7,-1,-1,3,4950.0,172,172,0,0.0],[1,1,9,-1,-1,3,4640.0,104,104,3,4640.0],[1,1,13,-1,-1,3,2180.0,41,41,1,2180.0],[1,1,26,-1,-1,3,5310.0,198,198,2,4060.0],[1,1,36,-1,-1,3,1020.0,41,41,0,0.0],[1,1,37,-1,-1,3,1680.0,36,36,1,1680.0],[1,1,39,-1,-1,3,0.0,20,20,0,0.0],[1,1,54,-1,-1,3,0.0,8,8,0,0.0],[1,1,55,-1,-1,3,7520.0,287,287,3,6040.0],[1,1,64,-1,-1,3,0.0,1,1,1,1380.0],[1,1,73,-1,-1,3,11180.0,283,283,6,11180.0],[1,1,80,-1,-1,3,150.0,13,13,0,0.0],[1,1,83,-1,-1,3,0.0,147,147,0,0.0],[1,1,84,-1,-1,3,8220.0,274,274,1,1880.0],[1,1,4,-1,-1,4,11760.0,265,265,7,11760.0],[1,1,5,-1,-1,4,4060.0,18,18,2,4060.0],[1,1,7,-1,-1,4,1050.0,35,35,0,0.0],[1,1,9,-1,-1,4,1950.0,65,65,0,0.0],[1,1,11,-1,-1,4,5820.0,182,182,4,5820.0],[1,1,13,-1,-1,4,4360.0,35,35,2,4360.0],[1,1,15,-1,-1,4,1740.0,58,58,0,0.0],[1,1,36,-1,-1,4,660.0,22,22,0,0.0],[1,1,37,-1,-1,4,1380.0,41,41,1,1380.0],[1,1,39,-1,-1,4,1020.0,34,34,0,0.0],[1,1,54,-1,-1,4,330.0,11,11,0,0.0],[1,1,55,-1,-1,4,3840.0,128,128,1,1380.0],[1,1,58,-1,-1,4,3510.0,117,117,0,0.0],[1,1,64,-1,-1,4,30.0,1,1,0,0.0],[1,1,73,-1,-1,4,13760.0,216,216,7,13760.0],[1,1,80,-1,-1,4,360.0,12,12,0,0.0],[1,1,83,-1,-1,4,180.0,6,6,0,0.0],[1,1,84,-1,-1,4,3300.0,110,110,0,0.0],[1,1,4,-1,-1,5,6420.0,214,214,3,5640.0],[1,1,5,-1,-1,5,1380.0,35,35,1,1380.0],[1,1,7,-1,-1,5,60.0,2,2,0,0.0],[1,1,9,-1,-1,5,990.0,33,33,0,0.0],[1,1,11,-1,-1,5,480.0,16,16,0,0.0],[1,1,13,-1,-1,5,3480.0,116,116,0,0.0],[1,1,15,-1,-1,5,2490.0,83,83,0,0.0],[1,1,26,-1,-1,5,7020.0,234,234,2,3860.0],[1,1,27,-1,-1,5,0.0,28,28,0,0.0],[1,1,28,-1,-1,5,25.0,1,1,0,0.0],[1,1,30,-1,-1,5,0.0,22,22,0,0.0],[1,1,35,-1,-1,5,150.0,5,5,0,0.0],[1,1,36,-1,-1,5,30.0,1,1,0,0.0],[1,1,37,-1,-1,5,1380.0,46,46,0,0.0],[1,1,39,-1,-1,5,5440.0,34,34,3,5440.0],[1,1,48,-1,-1,5,1880.0,18,18,1,1880.0],[1,1,54,-1,-1,5,690.0,23,23,0,0.0],[1,1,55,-1,-1,5,4530.0,151,151,0,0.0],[1,1,56,-1,-1,5,30.0,1,1,0,0.0],[1,1,62,-1,-1,5,900.0,30,30,0,0.0],[1,1,68,-1,-1,5,8300.0,243,243,5,8300.0],[1,1,70,-1,-1,5,3560.0,37,37,2,3560.0],[1,1,73,-1,-1,5,3960.0,132,132,1,1380.0],[1,1,74,-1,-1,5,30.0,1,1,0,0.0],[1,1,79,-1,-1,5,3960.0,132,132,0,0.0],[1,1,80,-1,-1,5,510.0,17,17,0,0.0],[1,1,4,-1,-1,6,7650.0,255,255,3,6240.0],[1,1,5,-1,-1,6,3570.0,119,119,0,700.0],[1,1,7,-1,-1,6,300.0,10,10,0,0.0],[1,1,9,-1,-1,6,2250.0,75,75,1,1380.0],[1,1,11,-1,-1,6,240.0,8,8,0,0.0],[1,1,13,-1,-1,6,5240.0,120,120,3,5240.0],[1,1,15,-1,-1,6,2180.0,65,65,1,2180.0],[1,1,26,-1,-1,6,0.0,44,44,0,0.0],[1,1,33,-1,-1,6,0.0,104,104,0,0.0],[1,1,35,-1,-1,6,360.0,12,12,0,0.0],[1,1,37,-1,-1,6,0.0,16,16,0,0.0],[1,1,38,-1,-1,6,120.0,4,4,0,0.0],[1,1,39,-1,-1,6,2310.0,77,77,0,0.0],[1,1,40,-1,-1,6,120.0,4,4,0,0.0],[1,1,41,-1,-1,6,1080.0,36,36,0,0.0],[1,1,48,-1,-1,6,0.0,16,16,0,0.0],[1,1,54,-1,-1,6,1880.0,21,21,1,1880.0],[1,1,68,-1,-1,6,11860.0,167,167,7,11860.0],[1,1,70,-1,-1,6,3090.0,103,103,0,0.0],[1,1,73,-1,-1,6,4320.0,144,144,2,3860.0],[1,1,75,-1,-1,6,30.0,1,1,0,0.0],[1,1,79,-1,-1,6,3330.0,111,111,0,200.0],[1,1,80,-1,-1,6,570.0,19,19,0,0.0],[1,1,4,-1,-1,7,18700.0,404,404,10,18700.0],[1,1,5,-1,-1,7,3120.0,104,104,0,0.0],[1,1,7,-1,-1,7,60.0,2,2,0,0.0],[1,1,9,-1,-1,7,1380.0,46,46,1,1380.0],[1,1,11,-1,-1,7,90.0,3,3,0,0.0],[1,1,13,-1,-1,7,1050.0,35,35,0,0.0],[1,1,15,-1,-1,7,270.0,9,9,0,0.0],[1,1,28,-1,-1,7,25.0,1,1,0,0.0],[1,1,33,-1,-1,7,0.0,76,76,0,0.0],[1,1,35,-1,-1,7,240.0,8,8,0,0.0],[1,1,36,-1,-1,7,60.0,2,2,0,0.0],[1,1,37,-1,-1,7,0.0,9,9,0,0.0],[1,1,38,-1,-1,7,30.0,1,1,0,0.0],[1,1,39,-1,-1,7,6040.0,98,98,3,6040.0],[1,1,40,-1,-1,7,150.0,5,5,0,0.0],[1,1,41,-1,-1,7,2640.0,88,88,0,0.0],[1,1,48,-1,-1,7,1680.0,37,37,1,1680.0],[1,1,54,-1,-1,7,270.0,9,9,0,0.0],[1,1,62,-1,-1,7,1200.0,40,40,0,0.0],[1,1,68,-1,-1,7,660.0,22,22,0,0.0],[1,1,69,-1,-1,7,2820.0,87,87,3,5640.0],[1,1,70,-1,-1,7,2400.0,80,80,0,0.0],[1,1,73,-1,-1,7,3150.0,105,105,0,0.0],[1,1,75,-1,-1,7,60.0,2,2,0,0.0],[1,1,79,-1,-1,7,16860.0,272,272,7,16860.0],[1,1,80,-1,-1,7,1050.0,35,35,0,0.0],[1,1,85,-1,-1,7,1020.0,34,34,0,0.0],[1,1,4,-1,-1,8,7770.0,259,259,2,3260.0],[1,1,5,-1,-1,8,2490.0,83,83,1,1680.0],[1,1,7,-1,-1,8,30.0,1,1,0,0.0],[1,1,9,-1,-1,8,3360.0,112,112,0,0.0],[1,1,11,-1,-1,8,90.0,3,3,0,0.0],[1,1,13,-1,-1,8,1680.0,56,56,0,0.0],[1,1,28,-1,-1,8,1400.0,56,56,0,0.0],[1,1,33,-1,-1,8,0.0,52,52,0,0.0],[1,1,35,-1,-1,8,60.0,2,2,0,0.0],[1,1,36,-1,-1,8,30.0,1,1,0,0.0],[1,1,37,-1,-1,8,2180.0,84,84,1,2180.0],[1,1,38,-1,-1,8,180.0,6,6,0,0.0],[1,1,39,-1,-1,8,16640.0,173,173,8,16640.0],[1,1,40,-1,-1,8,30.0,1,1,0,0.0],[1,1,41,-1,-1,8,4920.0,164,164,0,0.0],[1,1,48,-1,-1,8,0.0,55,55,0,0.0],[1,1,54,-1,-1,8,690.0,23,23,0,0.0],[1,1,64,-1,-1,8,1110.0,37,37,0,0.0],[1,1,68,-1,-1,8,2490.0,83,83,1,1880.0],[1,1,69,-1,-1,8,690.0,52,52,1,1380.0],[1,1,70,-1,-1,8,3060.0,102,102,1,1880.0],[1,1,73,-1,-1,8,4590.0,153,153,0,0.0],[1,1,79,-1,-1,8,6870.0,229,229,3,5240.0],[1,1,80,-1,-1,8,1410.0,47,47,0,0.0],[1,1,85,-1,-1,8,660.0,22,22,0,0.0],[1,1,0,-1,-1,9,60.0,2,2,0,0.0],[1,1,3,-1,-1,9,8190.0,273,273,3,4140.0],[1,1,4,-1,-1,9,13770.0,459,459,5,11600.0],[1,1,5,-1,-1,9,1740.0,58,58,0,0.0],[1,1,9,-1,-1,9,960.0,32,32,0,0.0],[1,1,11,-1,-1,9,30.0,1,1,0,0.0],[1,1,13,-1,-1,9,4680.0,156,156,1,2180.0],[1,1,21,-1,-1,9,60.0,2,2,0,0.0],[1,1,28,-1,-1,9,850.0,34,34,0,0.0],[1,1,33,-1,-1,9,0.0,103,103,0,0.0],[1,1,36,-1,-1,9,30.0,1,1,0,0.0],[1,1,37,-1,-1,9,2760.0,54,54,2,2760.0],[1,1,39,-1,-1,9,6360.0,212,212,3,4140.0],[1,1,40,-1,-1,9,60.0,2,2,0,0.0],[1,1,41,-1,-1,9,3000.0,100,100,0,0.0],[1,1,44,-1,-1,9,420.0,14,14,0,0.0],[1,1,48,-1,-1,9,0.0,23,23,0,0.0],[1,1,54,-1,-1,9,390.0,13,13,0,0.0],[1,1,62,-1,-1,9,30.0,1,1,0,0.0],[1,1,64,-1,-1,9,720.0,24,24,0,0.0],[1,1,68,-1,-1,9,2850.0,95,95,1,1380.0],[1,1,69,-1,-1,9,0.0,35,35,0,0.0],[1,1,70,-1,-1,9,1320.0,44,44,0,0.0],[1,1,73,-1,-1,9,4620.0,154,154,1,1680.0],[1,1,75,-1,-1,9,30.0,1,1,0,0.0],[1,1,77,-1,-1,9,30.0,1,1,0,0.0],[1,1,79,-1,-1,9,5740.0,126,126,3,5740.0],[1,1,80,-1,-1,9,600.0,20,20,0,0.0],[1,1,85,-1,-1,9,660.0,22,22,0,0.0],[1,1,0,-1,-1,10,360.0,12,12,0,0.0],[1,1,3,-1,-1,10,4260.0,142,142,0,0.0],[1,1,4,-1,-1,10,15380.0,401,401,6,15380.0],[1,1,5,-1,-1,10,120.0,4,4,0,0.0],[1,1,7,-1,-1,10,30.0,1,1,0,0.0],[1,1,9,-1,-1,10,2280.0,76,76,0,0.0],[1,1,11,-1,-1,10,30.0,1,1,0,0.0],[1,1,13,-1,-1,10,10480.0,327,327,6,10480.0],[1,1,21,-1,-1,10,30.0,1,1,0,0.0],[1,1,28,-1,-1,10,475.0,19,19,0,0.0],[1,1,36,-1,-1,10,60.0,2,2,0,0.0],[1,1,37,-1,-1,10,0.0,21,21,0,0.0],[1,1,39,-1,-1,10,22460.0,180,180,12,22460.0],[1,1,40,-1,-1,10,30.0,1,1,0,0.0],[1,1,42,-1,-1,10,0.0,4,4,0,0.0],[1,1,44,-1,-1,10,10140.0,338,338,0,0.0],[1,1,48,-1,-1,10,2680.0,11,11,1,2680.0],[1,1,51,-1,-1,10,0.0,1,1,0,0.0],[1,1,54,-1,-1,10,840.0,28,28,0,0.0],[1,1,64,-1,-1,10,90.0,3,3,0,0.0],[1,1,66,-1,-1,10,4500.0,150,150,1,2180.0],[1,1,68,-1,-1,10,3000.0,100,100,0,0.0],[1,1,69,-1,-1,10,0.0,6,6,0,0.0],[1,1,70,-1,-1,10,750.0,25,25,0,0.0],[1,1,73,-1,-1,10,4770.0,159,159,2,2760.0],[1,1,75,-1,-1,10,30.0,1,1,0,0.0],[1,1,77,-1,-1,10,1980.0,66,66,0,0.0],[1,1,79,-1,-1,10,13860.0,462,462,6,11380.0],[1,1,80,-1,-1,10,1380.0,46,46,0,0.0],[1,1,85,-1,-1,10,1770.0,59,59,0,0.0],[1,1,0,-1,-1,11,90.0,3,3,0,0.0],[1,1,3,-1,-1,11,1290.0,43,43,0,0.0],[1,1,4,-1,-1,11,10200.0,340,340,1,2680.0],[1,1,7,-1,-1,11,30.0,1,1,0,0.0],[1,1,9,-1,-1,11,210.0,7,7,0,0.0],[1,1,13,-1,-1,11,3570.0,119,119,2,3560.0],[1,1,17,-1,-1,11,3450.0,115,115,0,0.0],[1,1,21,-1,-1,11,60.0,2,2,0,0.0],[1,1,28,-1,-1,11,25.0,1,1,0,0.0],[1,1,37,-1,-1,11,1380.0,6,6,1,1380.0],[1,1,39,-1,-1,11,5440.0,67,67,3,5440.0],[1,1,40,-1,-1,11,90.0,3,3,0,0.0],[1,1,41,-1,-1,11,1380.0,38,38,1,1380.0],[1,1,42,-1,-1,11,0.0,1,1,0,0.0],[1,1,44,-1,-1,11,6990.0,233,233,2,4860.0],[1,1,48,-1,-1,11,4060.0,7,7,2,4060.0],[1,1,49,-1,-1,11,30.0,1,1,0,0.0],[1,1,51,-1,-1,11,780.0,26,26,0,0.0],[1,1,54,-1,-1,11,450.0,15,15,0,0.0],[1,1,64,-1,-1,11,90.0,3,3,0,0.0],[1,1,66,-1,-1,11,3300.0,110,110,0,0.0],[1,1,68,-1,-1,11,2880.0,96,96,1,1680.0],[1,1,69,-1,-1,11,0.0,20,20,0,0.0],[1,1,70,-1,-1,11,1110.0,37,37,0,0.0],[1,1,73,-1,-1,11,7920.0,96,96,4,7920.0],[1,1,75,-1,-1,11,30.0,1,1,0,0.0],[1,1,77,-1,-1,11,1650.0,55,55,0,0.0],[1,1,79,-1,-1,11,4920.0,164,164,2,4660.0],[1,1,80,-1,-1,11,450.0,15,15,0,0.0],[1,1,85,-1,-1,11,780.0,26,26,0,0.0],[1,1,88,-1,-1,11,0.0,2,2,0,0.0],[1,1,3,-1,-1,12,180.0,52,52,0,0.0],[1,1,4,-1,-1,12,10680.0,289,289,7,12860.0],[1,1,5,-1,-1,12,0.0,223,223,0,0.0],[1,1,7,-1,-1,12,0.0,1,1,0,0.0],[1,1,9,-1,-1,12,2160.0,72,72,1,1380.0],[1,1,11,-1,-1,12,0.0,1,1,0,0.0],[1,1,13,-1,-1,12,2640.0,200,200,1,2680.0],[1,1,15,-1,-1,12,1920.0,64,64,0,0.0],[1,1,17,-1,-1,12,0.0,1,1,0,0.0],[1,1,22,-1,-1,12,0.0,1,1,0,0.0],[1,1,28,-1,-1,12,0.0,5,5,0,0.0],[1,1,36,-1,-1,12,0.0,1,1,0,0.0],[1,1,37,-1,-1,12,0.0,7,7,0,0.0],[1,1,39,-1,-1,12,3560.0,89,89,2,3560.0],[1,1,40,-1,-1,12,0.0,3,3,0,0.0],[1,1,42,-1,-1,12,0.0,1,1,0,0.0],[1,1,44,-1,-1,12,5730.0,191,191,0,0.0],[1,1,48,-1,-1,12,0.0,7,7,0,0.0],[1,1,49,-1,-1,12,30.0,1,1,0,0.0],[1,1,51,-1,-1,12,2680.0,6,6,1,2680.0],[1,1,54,-1,-1,12,630.0,21,21,0,0.0],[1,1,66,-1,-1,12,4260.0,142,142,1,1680.0],[1,1,68,-1,-1,12,0.0,37,37,0,0.0],[1,1,69,-1,-1,12,0.0,9,9,0,0.0],[1,1,70,-1,-1,12,0.0,10,10,0,0.0],[1,1,73,-1,-1,12,5820.0,174,174,4,5820.0],[1,1,77,-1,-1,12,0.0,53,53,0,0.0],[1,1,79,-1,-1,12,58960.0,934,934,37,67460.0],[1,1,80,-1,-1,12,0.0,21,21,0,0.0],[1,1,85,-1,-1,12,0.0,49,49,0,0.0],[1,1,88,-1,-1,12,0.0,1,1,0,0.0],[1,1,90,-1,-1,12,0.0,2,0,0,0.0],[1,1,2,-1,-1,13,2340.0,78,78,1,1780.0],[1,1,3,-1,-1,13,900.0,30,30,0,0.0],[1,1,4,-1,-1,13,16920.0,81,81,9,16920.0],[1,1,5,-1,-1,13,0.0,57,57,0,0.0],[1,1,7,-1,-1,13,0.0,1,1,0,0.0],[1,1,9,-1,-1,13,300.0,10,10,0,0.0],[1,1,10,-1,-1,13,1290.0,43,43,0,0.0],[1,1,11,-1,-1,13,1680.0,1,1,1,1680.0],[1,1,13,-1,-1,13,1380.0,40,40,1,1380.0],[1,1,15,-1,-1,13,90.0,3,3,0,0.0],[1,1,21,-1,-1,13,0.0,1,1,0,0.0],[1,1,22,-1,-1,13,1380.0,21,21,1,1380.0],[1,1,28,-1,-1,13,0.0,4,4,0,0.0],[1,1,37,-1,-1,13,0.0,1,1,0,0.0],[1,1,39,-1,-1,13,1880.0,32,32,1,1880.0],[1,1,44,-1,-1,13,2310.0,77,77,1,1380.0],[1,1,51,-1,-1,13,30.0,1,1,0,0.0],[1,1,54,-1,-1,13,90.0,3,3,0,0.0],[1,1,66,-1,-1,13,3090.0,103,103,0,0.0],[1,1,68,-1,-1,13,7700.0,129,129,5,7700.0],[1,1,69,-1,-1,13,0.0,4,4,0,0.0],[1,1,70,-1,-1,13,0.0,3,3,0,0.0],[1,1,73,-1,-1,13,2680.0,72,72,1,2680.0],[1,1,75,-1,-1,13,0.0,1,1,0,0.0],[1,1,77,-1,-1,13,0.0,28,28,0,0.0],[1,1,79,-1,-1,13,32160.0,1072,1072,15,29800.0],[1,1,80,-1,-1,13,0.0,3,3,0,0.0],[1,1,81,-1,-1,13,0.0,67,67,0,0.0],[1,1,85,-1,-1,13,0.0,25,25,0,0.0],[1,1,88,-1,-1,13,0.0,5,2,0,0.0],[1,1,90,-1,-1,13,0.0,2,2,0,0.0],[1,1,2,-1,-1,14,240.0,8,8,0,0.0],[1,1,4,-1,-1,14,5740.0,143,143,3,5740.0],[1,1,5,-1,-1,14,0.0,7,7,0,0.0],[1,1,9,-1,-1,14,180.0,6,6,0,0.0],[1,1,10,-1,-1,14,4380.0,146,146,2,3560.0],[1,1,13,-1,-1,14,2370.0,79,79,0,0.0],[1,1,28,-1,-1,14,0.0,1,1,0,0.0],[1,1,39,-1,-1,14,900.0,30,30,0,0.0],[1,1,44,-1,-1,14,4380.0,146,146,0,0.0],[1,1,51,-1,-1,14,0.0,1,1,0,0.0],[1,1,54,-1,-1,14,0.0,11,11,0,0.0],[1,1,66,-1,-1,14,2790.0,93,93,0,0.0],[1,1,68,-1,-1,14,0.0,15,15,0,0.0],[1,1,69,-1,-1,14,0.0,1,1,0,0.0],[1,1,70,-1,-1,14,0.0,13,13,0,0.0],[1,1,71,-1,-1,14,0.0,1,1,0,0.0],[1,1,73,-1,-1,14,11760.0,283,283,7,11760.0],[1,1,77,-1,-1,14,0.0,26,26,0,0.0],[1,1,78,-1,-1,14,0.0,20,20,0,0.0],[1,1,79,-1,-1,14,35200.0,767,767,20,35200.0],[1,1,81,-1,-1,14,0.0,80,80,0,0.0],[1,1,88,-1,-1,14,0.0,2,2,0,0.0],[1,1,90,-1,-1,14,0.0,22,20,0,0.0],[1,1,2,-1,-1,15,330.0,11,11,0,0.0],[1,1,4,-1,-1,15,10980.0,281,281,6,10980.0],[1,1,5,-1,-1,15,0.0,12,12,0,0.0],[1,1,9,-1,-1,15,660.0,22,22,0,0.0],[1,1,10,-1,-1,15,1380.0,16,16,1,1380.0],[1,1,13,-1,-1,15,3480.0,116,116,1,1880.0],[1,1,15,-1,-1,15,30.0,1,1,0,0.0],[1,1,22,-1,-1,15,30.0,1,1,0,0.0],[1,1,28,-1,-1,15,0.0,1,1,0,0.0],[1,1,39,-1,-1,15,1260.0,42,42,0,0.0],[1,1,40,-1,-1,15,60.0,2,2,0,0.0],[1,1,42,-1,-1,15,30.0,1,1,0,0.0],[1,1,44,-1,-1,15,4560.0,126,126,2,4560.0],[1,1,54,-1,-1,15,840.0,28,28,0,0.0],[1,1,66,-1,-1,15,2460.0,82,82,0,0.0],[1,1,68,-1,-1,15,23340.0,468,468,13,23340.0],[1,1,69,-1,-1,15,1780.0,51,51,2,3560.0],[1,1,70,-1,-1,15,150.0,5,5,0,0.0],[1,1,71,-1,-1,15,3960.0,132,132,0,0.0],[1,1,73,-1,-1,15,20880.0,386,386,11,20880.0],[1,1,77,-1,-1,15,1080.0,36,36,0,0.0],[1,1,78,-1,-1,15,7420.0,98,98,4,7420.0],[1,1,79,-1,-1,15,5740.0,163,163,3,5740.0],[1,1,81,-1,-1,15,1260.0,63,63,0,0.0],[1,1,87,-1,-1,15,0.0,1,1,0,0.0],[1,1,88,-1,-1,15,0.0,10,10,0,0.0],[1,1,90,-1,-1,15,0.0,10,10,0,0.0],[1,1,2,-1,-1,16,90.0,3,3,0,0.0],[1,1,4,-1,-1,16,4440.0,111,111,4,4440.0],[1,1,5,-1,-1,16,0.0,6,6,0,0.0],[1,1,8,-1,-1,16,60.0,2,2,0,0.0],[1,1,9,-1,-1,16,660.0,22,22,0,0.0],[1,1,10,-1,-1,16,5940.0,29,29,3,5940.0],[1,1,13,-1,-1,16,7380.0,246,246,0,0.0],[1,1,19,-1,-1,16,60.0,2,2,0,0.0],[1,1,28,-1,-1,16,0.0,2,2,0,0.0],[1,1,32,-1,-1,16,30.0,1,1,0,0.0],[1,1,39,-1,-1,16,780.0,26,26,0,0.0],[1,1,42,-1,-1,16,0.0,1,1,0,0.0],[1,1,44,-1,-1,16,5460.0,182,182,2,4860.0],[1,1,51,-1,-1,16,30.0,1,1,0,0.0],[1,1,54,-1,-1,16,1050.0,35,35,0,0.0],[1,1,66,-1,-1,16,0.0,115,115,0,0.0],[1,1,67,-1,-1,16,30.0,1,1,0,0.0],[1,1,68,-1,-1,16,15620.0,232,232,9,15620.0],[1,1,69,-1,-1,16,690.0,2,2,1,1380.0],[1,1,70,-1,-1,16,390.0,13,13,0,0.0],[1,1,71,-1,-1,16,540.0,18,18,0,0.0],[1,1,73,-1,-1,16,17420.0,318,318,9,17420.0],[1,1,77,-1,-1,16,690.0,23,23,0,0.0],[1,1,78,-1,-1,16,3060.0,102,102,1,2680.0],[1,1,79,-1,-1,16,9600.0,129,129,5,9600.0],[1,1,87,-1,-1,16,0.0,1,1,0,0.0],[1,1,88,-1,-1,16,0.0,8,7,0,0.0],[1,1,90,-1,-1,16,0.0,21,21,0,0.0],[1,1,4,-1,-1,17,15540.0,194,194,8,15540.0],[1,1,5,-1,-1,17,0.0,4,4,0,0.0],[1,1,9,-1,-1,17,1140.0,38,38,0,0.0],[1,1,10,-1,-1,17,1110.0,37,37,0,0.0],[1,1,11,-1,-1,17,30.0,1,1,0,0.0],[1,1,13,-1,-1,17,4360.0,94,94,2,4360.0],[1,1,19,-1,-1,17,150.0,5,5,0,0.0],[1,1,22,-1,-1,17,30.0,1,1,0,0.0],[1,1,28,-1,-1,17,0.0,1,1,0,0.0],[1,1,32,-1,-1,17,5040.0,168,168,0,0.0],[1,1,34,-1,-1,17,210.0,7,7,0,0.0],[1,1,38,-1,-1,17,540.0,18,18,0,0.0],[1,1,39,-1,-1,17,630.0,21,21,0,0.0],[1,1,41,-1,-1,17,2010.0,67,67,0,0.0],[1,1,42,-1,-1,17,0.0,6,6,0,0.0],[1,1,44,-1,-1,17,1110.0,37,37,0,0.0],[1,1,53,-1,-1,17,60.0,2,2,0,0.0],[1,1,54,-1,-1,17,1880.0,58,58,1,1880.0],[1,1,66,-1,-1,17,1880.0,90,90,1,1880.0],[1,1,68,-1,-1,17,2640.0,88,88,1,1380.0],[1,1,70,-1,-1,17,4500.0,150,150,0,0.0],[1,1,71,-1,-1,17,0.0,0,0,0,0.0],[1,1,73,-1,-1,17,4860.0,113,113,2,4860.0],[1,1,77,-1,-1,17,870.0,29,29,0,0.0],[1,1,78,-1,-1,17,1530.0,51,51,0,0.0],[1,1,79,-1,-1,17,6240.0,155,155,3,6240.0],[1,1,87,-1,-1,17,0.0,1,1,0,0.0],[1,1,88,-1,-1,17,840.0,8,5,1,1680.0],[1,1,90,-1,-1,17,0.0,27,26,0,0.0],[1,1,4,-1,-1,18,25178.0,326,326,12,25178.0],[1,1,5,-1,-1,18,0.0,1,1,0,0.0],[1,1,9,-1,-1,18,1380.0,27,27,1,1380.0],[1,1,10,-1,-1,18,1680.0,56,56,1,1380.0],[1,1,11,-1,-1,18,2760.0,65,65,2,2760.0],[1,1,13,-1,-1,18,1740.0,58,58,0,0.0],[1,1,19,-1,-1,18,540.0,18,18,0,0.0],[1,1,22,-1,-1,18,3260.0,64,64,2,3260.0],[1,1,34,-1,-1,18,150.0,5,5,0,0.0],[1,1,38,-1,-1,18,0.0,7,7,0,0.0],[1,1,39,-1,-1,18,0.0,21,21,0,0.0],[1,1,41,-1,-1,18,2730.0,91,91,1,2680.0],[1,1,44,-1,-1,18,210.0,7,7,0,0.0],[1,1,46,-1,-1,18,270.0,9,9,0,0.0],[1,1,53,-1,-1,18,1260.0,42,42,0,0.0],[1,1,54,-1,-1,18,3560.0,24,24,2,3560.0],[1,1,66,-1,-1,18,4230.0,141,141,0,0.0],[1,1,68,-1,-1,18,10580.0,215,215,6,10580.0],[1,1,69,-1,-1,18,30.0,1,1,0,0.0],[1,1,70,-1,-1,18,5940.0,198,198,0,0.0],[1,1,73,-1,-1,18,4050.0,135,135,1,1380.0],[1,1,77,-1,-1,18,1440.0,48,48,0,300.0],[1,1,78,-1,-1,18,4740.0,59,59,3,4740.0],[1,1,79,-1,-1,18,41420.0,924,924,24,41420.0],[1,1,88,-1,-1,18,600.0,8,6,0,1200.0],[1,1,90,-1,-1,18,1090.0,2,2,1,2180.0],[1,1,4,-1,-1,19,16020.0,197,197,9,16020.0],[1,1,5,-1,-1,19,0.0,4,4,0,0.0],[1,1,9,-1,-1,19,1050.0,35,35,0,0.0],[1,1,10,-1,-1,19,930.0,31,31,0,0.0],[1,1,11,-1,-1,19,2340.0,78,78,1,1680.0],[1,1,13,-1,-1,19,2040.0,68,68,0,0.0],[1,1,19,-1,-1,19,90.0,3,3,0,0.0],[1,1,22,-1,-1,19,900.0,30,30,0,0.0],[1,1,38,-1,-1,19,960.0,32,32,0,0.0],[1,1,39,-1,-1,19,450.0,15,15,0,0.0],[1,1,41,-1,-1,19,420.0,14,14,0,0.0],[1,1,42,-1,-1,19,0.0,17,17,0,0.0],[1,1,44,-1,-1,19,660.0,22,22,0,0.0],[1,1,46,-1,-1,19,1880.0,21,21,1,1880.0],[1,1,49,-1,-1,19,30.0,1,1,0,0.0],[1,1,53,-1,-1,19,1380.0,24,24,1,1380.0],[1,1,54,-1,-1,19,1880.0,24,24,1,1880.0],[1,1,57,-1,-1,19,3480.0,116,116,1,2180.0],[1,1,66,-1,-1,19,0.0,85,85,0,0.0],[1,1,68,-1,-1,19,2010.0,67,67,1,1380.0],[1,1,70,-1,-1,19,1920.0,64,64,1,1380.0],[1,1,73,-1,-1,19,3060.0,102,102,1,1380.0],[1,1,77,-1,-1,19,2180.0,35,35,1,2180.0],[1,1,78,-1,-1,19,7620.0,40,40,4,7620.0],[1,1,79,-1,-1,19,13940.0,342,342,8,13940.0],[1,1,88,-1,-1,19,0.0,2,1,0,0.0],[1,1,90,-1,-1,19,0.0,2,1,0,0.0],[1,1,4,-1,-1,20,14960.0,210,210,7,14960.0],[1,1,5,-1,-1,20,0.0,20,20,0,0.0],[1,1,9,-1,-1,20,1050.0,35,35,0,0.0],[1,1,10,-1,-1,20,735.0,21,21,0,0.0],[1,1,11,-1,-1,20,1890.0,63,63,0,0.0],[1,1,13,-1,-1,20,4050.0,135,135,1,2680.0],[1,1,18,-1,-1,20,30.0,1,1,0,0.0],[1,1,19,-1,-1,20,30.0,1,1,0,0.0],[1,1,20,-1,-1,20,330.0,11,11,0,0.0],[1,1,28,-1,-1,20,0.0,1,1,0,0.0],[1,1,38,-1,-1,20,5160.0,172,172,0,0.0],[1,1,39,-1,-1,20,270.0,9,9,0,0.0],[1,1,42,-1,-1,20,0.0,1,1,0,0.0],[1,1,43,-1,-1,20,435.0,29,29,0,0.0],[1,1,44,-1,-1,20,4860.0,92,92,2,4860.0],[1,1,46,-1,-1,20,480.0,16,16,0,0.0],[1,1,53,-1,-1,20,6620.0,112,112,4,6620.0],[1,1,54,-1,-1,20,2760.0,32,32,2,2760.0],[1,1,57,-1,-1,20,4940.0,164,164,3,4940.0],[1,1,63,-1,-1,20,30.0,1,1,0,0.0],[1,1,66,-1,-1,20,1380.0,87,87,1,1380.0],[1,1,68,-1,-1,20,600.0,20,20,0,0.0],[1,1,70,-1,-1,20,2520.0,84,84,0,0.0],[1,1,73,-1,-1,20,11480.0,173,173,6,11480.0],[1,1,77,-1,-1,20,150.0,5,5,0,0.0],[1,1,78,-1,-1,20,240.0,8,8,0,0.0],[1,1,79,-1,-1,20,1380.0,27,27,1,1380.0],[1,1,88,-1,-1,20,0.0,3,1,0,0.0],[1,1,89,-1,-1,20,890.0,55,42,1,1780.0],[1,1,90,-1,-1,20,0.0,5,4,0,0.0],[1,1,4,-1,-1,21,13160.0,376,376,5,9800.0],[1,1,5,-1,-1,21,0.0,3,3,0,0.0],[1,1,9,-1,-1,21,210.0,7,7,0,0.0],[1,1,10,-1,-1,21,30.0,1,1,0,0.0],[1,1,11,-1,-1,21,2850.0,95,95,1,1880.0],[1,1,13,-1,-1,21,3360.0,112,112,0,0.0],[1,1,18,-1,-1,21,90.0,3,3,0,0.0],[1,1,20,-1,-1,21,300.0,10,10,0,0.0],[1,1,22,-1,-1,21,180.0,6,6,0,0.0],[1,1,28,-1,-1,21,0.0,2,2,0,0.0],[1,1,34,-1,-1,21,150.0,5,5,0,0.0],[1,1,38,-1,-1,21,2100.0,70,70,0,0.0],[1,1,39,-1,-1,21,1410.0,47,47,0,0.0],[1,1,42,-1,-1,21,0.0,2,2,0,0.0],[1,1,43,-1,-1,21,210.0,14,14,0,0.0],[1,1,44,-1,-1,21,3510.0,117,117,0,0.0],[1,1,46,-1,-1,21,4380.0,146,146,1,2680.0],[1,1,53,-1,-1,21,4080.0,136,136,2,3560.0],[1,1,54,-1,-1,21,1410.0,47,47,0,0.0],[1,1,57,-1,-1,21,5490.0,183,183,1,2680.0],[1,1,63,-1,-1,21,210.0,7,7,0,0.0],[1,1,66,-1,-1,21,1380.0,132,132,1,1380.0],[1,1,68,-1,-1,21,2180.0,19,19,1,2180.0],[1,1,69,-1,-1,21,0.0,2,2,0,0.0],[1,1,70,-1,-1,21,570.0,19,19,0,0.0],[1,1,73,-1,-1,21,5075.0,145,145,0,0.0],[1,1,77,-1,-1,21,1380.0,12,12,1,1380.0],[1,1,78,-1,-1,21,450.0,15,15,0,0.0],[1,1,79,-1,-1,21,2180.0,16,16,1,2180.0],[1,1,87,-1,-1,21,0.0,1,1,0,0.0],[1,1,88,-1,-1,21,0.0,6,6,0,0.0],[1,1,89,-1,-1,21,1340.0,37,22,1,2680.0],[1,1,90,-1,-1,21,0.0,13,13,0,0.0],[1,1,4,-1,-1,22,6240.0,178,178,3,6240.0],[1,1,10,-1,-1,22,180.0,6,6,0,0.0],[1,1,11,-1,-1,22,1890.0,63,63,0,0.0],[1,1,13,-1,-1,22,1020.0,34,34,0,0.0],[1,1,18,-1,-1,22,0.0,2,2,0,0.0],[1,1,22,-1,-1,22,180.0,6,6,0,0.0],[1,1,28,-1,-1,22,0.0,2,2,0,0.0],[1,1,38,-1,-1,22,2040.0,68,68,0,0.0],[1,1,39,-1,-1,22,870.0,29,29,0,0.0],[1,1,41,-1,-1,22,300.0,10,10,0,0.0],[1,1,42,-1,-1,22,0.0,1,1,0,0.0],[1,1,43,-1,-1,22,990.0,66,66,0,0.0],[1,1,44,-1,-1,22,1410.0,47,47,0,0.0],[1,1,46,-1,-1,22,4080.0,136,136,0,0.0],[1,1,50,-1,-1,22,510.0,17,17,0,0.0],[1,1,53,-1,-1,22,7820.0,194,194,4,7820.0],[1,1,54,-1,-1,22,750.0,25,25,0,0.0],[1,1,57,-1,-1,22,4860.0,146,146,2,4860.0],[1,1,63,-1,-1,22,630.0,21,21,0,0.0],[1,1,66,-1,-1,22,0.0,42,42,0,0.0],[1,1,68,-1,-1,22,10080.0,242,242,6,10080.0],[1,1,69,-1,-1,22,0.0,1,1,0,0.0],[1,1,70,-1,-1,22,2580.0,86,86,0,0.0],[1,1,73,-1,-1,22,3560.0,44,44,2,3560.0],[1,1,77,-1,-1,22,840.0,28,28,0,0.0],[1,1,78,-1,-1,22,330.0,11,11,0,0.0],[1,1,79,-1,-1,22,24920.0,398,398,14,24920.0],[1,1,88,-1,-1,22,0.0,11,9,0,0.0],[1,1,89,-1,-1,22,1340.0,31,31,1,2680.0],[1,1,90,-1,-1,22,0.0,15,15,0,0.0],[1,1,4,-1,-1,23,10300.0,343,343,5,10300.0],[1,1,11,-1,-1,23,1260.0,36,36,0,0.0],[1,1,13,-1,-1,23,5520.0,184,184,1,1880.0],[1,1,18,-1,-1,23,90.0,3,3,0,0.0],[1,1,20,-1,-1,23,30.0,1,1,0,0.0],[1,1,22,-1,-1,23,1880.0,37,37,2,1880.0],[1,1,24,-1,-1,23,510.0,17,17,0,0.0],[1,1,28,-1,-1,23,0.0,2,2,0,0.0],[1,1,29,-1,-1,23,7620.0,216,216,4,7620.0],[1,1,34,-1,-1,23,30.0,1,1,0,0.0],[1,1,38,-1,-1,23,1560.0,52,52,0,0.0],[1,1,39,-1,-1,23,4980.0,166,166,3,3760.0],[1,1,41,-1,-1,23,510.0,17,17,0,0.0],[1,1,42,-1,-1,23,0.0,1,1,0,0.0],[1,1,43,-1,-1,23,750.0,50,50,0,0.0],[1,1,44,-1,-1,23,1680.0,56,56,0,0.0],[1,1,46,-1,-1,23,4470.0,149,149,2,3260.0],[1,1,50,-1,-1,23,330.0,11,11,0,0.0],[1,1,54,-1,-1,23,2680.0,12,12,1,2680.0],[1,1,57,-1,-1,23,2400.0,80,80,1,1380.0],[1,1,61,-1,-1,23,80.0,2,2,0,0.0],[1,1,63,-1,-1,23,1350.0,45,45,0,0.0],[1,1,66,-1,-1,23,3560.0,67,67,2,3560.0],[1,1,67,-1,-1,23,60.0,2,2,0,0.0],[1,1,68,-1,-1,23,7140.0,238,238,3,5740.0],[1,1,70,-1,-1,23,1380.0,44,44,1,1380.0],[1,1,73,-1,-1,23,510.0,17,17,0,0.0],[1,1,77,-1,-1,23,330.0,11,11,0,0.0],[1,1,78,-1,-1,23,150.0,5,5,0,0.0],[1,1,79,-1,-1,23,16920.0,366,366,9,16920.0],[1,1,82,-1,-1,23,3450.0,115,115,1,2180.0],[1,1,87,-1,-1,23,0.0,1,1,0,0.0],[1,1,88,-1,-1,23,0.0,15,11,0,0.0],[1,1,89,-1,-1,23,0.0,26,19,0,0.0],[1,1,90,-1,-1,23,0.0,22,22,0,0.0],[1,1,4,-1,-1,24,10325.0,295,295,3,5440.0],[1,1,6,-1,-1,24,60.0,2,2,0,0.0],[1,1,10,-1,-1,24,4940.0,45,45,3,4940.0],[1,1,11,-1,-1,24,455.0,13,13,0,0.0],[1,1,13,-1,-1,24,5940.0,54,54,3,5940.0],[1,1,15,-1,-1,24,30.0,1,1,0,0.0],[1,1,18,-1,-1,24,30.0,1,1,0,0.0],[1,1,22,-1,-1,24,1680.0,11,11,1,1680.0],[1,1,24,-1,-1,24,1680.0,41,41,1,1680.0],[1,1,28,-1,-1,24,0.0,1,1,0,0.0],[1,1,29,-1,-1,24,9720.0,157,157,4,9720.0],[1,1,34,-1,-1,24,30.0,1,1,0,0.0],[1,1,38,-1,-1,24,2160.0,72,72,0,0.0],[1,1,39,-1,-1,24,3480.0,116,116,1,2680.0],[1,1,42,-1,-1,24,0.0,2,2,0,0.0],[1,1,44,-1,-1,24,1830.0,61,61,0,400.0],[1,1,46,-1,-1,24,3540.0,118,118,1,2180.0],[1,1,49,-1,-1,24,30.0,1,1,0,0.0],[1,1,54,-1,-1,24,540.0,18,18,0,0.0],[1,1,57,-1,-1,24,3060.0,102,102,1,1380.0],[1,1,61,-1,-1,24,270.0,9,9,1,0.0],[1,1,63,-1,-1,24,1380.0,44,44,1,1380.0],[1,1,66,-1,-1,24,0.0,51,51,0,0.0],[1,1,68,-1,-1,24,810.0,27,27,0,0.0],[1,1,70,-1,-1,24,120.0,4,4,0,0.0],[1,1,73,-1,-1,24,720.0,24,24,0,0.0],[1,1,77,-1,-1,24,210.0,7,7,0,0.0],[1,1,78,-1,-1,24,90.0,3,3,0,0.0],[1,1,79,-1,-1,24,8520.0,284,284,1,1380.0],[1,1,82,-1,-1,24,1860.0,62,62,0,0.0],[1,1,87,-1,-1,24,0.0,1,1,0,0.0],[1,1,88,-1,-1,24,0.0,6,5,0,0.0],[1,1,89,-1,-1,24,0.0,18,13,0,0.0],[1,1,90,-1,-1,24,0.0,27,25,0,0.0],[1,1,4,-1,-1,25,18740.0,276,276,8,18740.0],[1,1,5,-1,-1,25,0.0,1,1,0,0.0],[1,1,6,-1,-1,25,30.0,1,1,0,0.0],[1,1,9,-1,-1,25,330.0,11,11,0,0.0],[1,1,10,-1,-1,25,245.0,7,7,0,0.0],[1,1,11,-1,-1,25,140.0,4,4,0,0.0],[1,1,13,-1,-1,25,390.0,13,13,0,0.0],[1,1,22,-1,-1,25,105.0,3,3,0,0.0],[1,1,24,-1,-1,25,4940.0,46,46,3,4940.0],[1,1,29,-1,-1,25,15040.0,108,108,8,15040.0],[1,1,34,-1,-1,25,60.0,2,2,0,0.0],[1,1,38,-1,-1,25,2180.0,61,61,1,2180.0],[1,1,39,-1,-1,25,4360.0,96,96,2,4360.0],[1,1,40,-1,-1,25,30.0,1,1,0,0.0],[1,1,44,-1,-1,25,2680.0,58,58,1,2680.0],[1,1,46,-1,-1,25,4380.0,146,146,1,2680.0],[1,1,49,-1,-1,25,30.0,1,1,0,0.0],[1,1,54,-1,-1,25,360.0,12,12,0,0.0],[1,1,57,-1,-1,25,2130.0,71,71,0,0.0],[1,1,59,-1,-1,25,2400.0,80,80,0,0.0],[1,1,61,-1,-1,25,750.0,25,25,0,0.0],[1,1,66,-1,-1,25,0.0,30,30,0,0.0],[1,1,68,-1,-1,25,150.0,5,5,0,0.0],[1,1,70,-1,-1,25,180.0,6,6,0,0.0],[1,1,73,-1,-1,25,1380.0,26,26,1,1380.0],[1,1,77,-1,-1,25,390.0,13,13,0,0.0],[1,1,78,-1,-1,25,30.0,1,1,0,0.0],[1,1,79,-1,-1,25,4260.0,142,142,0,0.0],[1,1,82,-1,-1,25,1980.0,66,66,0,0.0],[1,1,87,-1,-1,25,0.0,1,1,0,0.0],[1,1,88,-1,-1,25,0.0,7,6,0,0.0],[1,1,89,-1,-1,25,1380.0,17,13,2,2760.0],[1,1,90,-1,-1,25,0.0,18,18,0,0.0],[1,1,4,-1,-1,26,11580.0,281,281,6,11580.0],[1,1,9,-1,-1,26,480.0,16,16,0,0.0],[1,1,10,-1,-1,26,350.0,10,10,0,0.0],[1,1,12,-1,-1,26,180.0,6,6,0,0.0],[1,1,13,-1,-1,26,420.0,14,14,0,0.0],[1,1,18,-1,-1,26,60.0,2,2,0,0.0],[1,1,20,-1,-1,26,30.0,1,1,0,0.0],[1,1,22,-1,-1,26,35.0,1,1,0,0.0],[1,1,24,-1,-1,26,1470.0,49,49,0,0.0],[1,1,29,-1,-1,26,12160.0,112,112,7,12160.0],[1,1,38,-1,-1,26,240.0,8,8,0,0.0],[1,1,39,-1,-1,26,11980.0,60,60,6,11980.0],[1,1,44,-1,-1,26,1380.0,46,46,0,0.0],[1,1,46,-1,-1,26,3390.0,113,113,1,1380.0],[1,1,49,-1,-1,26,30.0,1,1,0,0.0],[1,1,54,-1,-1,26,3760.0,23,23,3,3760.0],[1,1,57,-1,-1,26,4640.0,108,108,3,4640.0],[1,1,59,-1,-1,26,240.0,8,8,0,0.0],[1,1,61,-1,-1,26,1050.0,35,35,0,0.0],[1,1,63,-1,-1,26,660.0,22,22,0,0.0],[1,1,66,-1,-1,26,0.0,54,54,0,0.0],[1,1,68,-1,-1,26,210.0,7,7,0,0.0],[1,1,70,-1,-1,26,330.0,11,11,0,0.0],[1,1,73,-1,-1,26,360.0,12,12,0,0.0],[1,1,77,-1,-1,26,810.0,27,27,0,0.0],[1,1,78,-1,-1,26,30.0,1,1,0,0.0],[1,1,79,-1,-1,26,10880.0,317,317,6,10880.0],[1,1,82,-1,-1,26,1740.0,58,58,0,0.0],[1,1,88,-1,-1,26,0.0,7,3,0,0.0],[1,1,89,-1,-1,26,940.0,27,21,1,1880.0],[1,1,90,-1,-1,26,0.0,17,17,0,0.0],[1,1,4,-1,-1,27,19500.0,522,522,10,19500.0],[1,1,9,-1,-1,27,3760.0,35,35,2,3760.0],[1,1,10,-1,-1,27,140.0,4,4,0,0.0],[1,1,13,-1,-1,27,810.0,27,27,0,0.0],[1,1,15,-1,-1,27,30.0,1,1,0,0.0],[1,1,16,-1,-1,27,2760.0,56,56,2,2760.0],[1,1,24,-1,-1,27,1680.0,43,43,1,1680.0],[1,1,29,-1,-1,27,3060.0,57,57,2,3060.0],[1,1,38,-1,-1,27,30.0,1,1,0,0.0],[1,1,39,-1,-1,27,1740.0,58,58,0,0.0],[1,1,40,-1,-1,27,30.0,1,1,0,0.0],[1,1,42,-1,-1,27,0.0,1,1,0,0.0],[1,1,44,-1,-1,27,4360.0,108,108,2,4360.0],[1,1,46,-1,-1,27,4530.0,151,151,2,3060.0],[1,1,54,-1,-1,27,420.0,14,14,0,0.0],[1,1,57,-1,-1,27,4560.0,79,79,2,4560.0],[1,1,61,-1,-1,27,1680.0,30,30,1,1680.0],[1,1,63,-1,-1,27,1650.0,55,55,0,0.0],[1,1,68,-1,-1,27,360.0,12,12,0,0.0],[1,1,69,-1,-1,27,0.0,1,1,0,0.0],[1,1,70,-1,-1,27,240.0,8,8,0,0.0],[1,1,72,-1,-1,27,90.0,3,3,0,0.0],[1,1,73,-1,-1,27,840.0,28,28,0,0.0],[1,1,77,-1,-1,27,2340.0,78,78,1,1880.0],[1,1,79,-1,-1,27,3030.0,101,101,1,2180.0],[1,1,82,-1,-1,27,630.0,21,21,0,0.0],[1,1,87,-1,-1,27,0.0,2,2,0,0.0],[1,1,88,-1,-1,27,0.0,1,0,0,0.0],[1,1,89,-1,-1,27,200.0,17,12,0,400.0],[1,1,4,-1,-1,28,15140.0,420,420,8,15140.0],[1,1,6,-1,-1,28,30.0,1,1,0,0.0],[1,1,8,-1,-1,28,30.0,1,1,0,0.0],[1,1,9,-1,-1,28,780.0,26,26,0,0.0],[1,1,10,-1,-1,28,4360.0,40,40,2,4360.0],[1,1,12,-1,-1,28,30.0,1,1,0,0.0],[1,1,13,-1,-1,28,3560.0,44,44,2,3560.0],[1,1,16,-1,-1,28,210.0,7,7,0,0.0],[1,1,22,-1,-1,28,140.0,4,4,0,0.0],[1,1,23,-1,-1,28,30.0,1,1,0,0.0],[1,1,24,-1,-1,28,1380.0,39,39,1,1380.0],[1,1,29,-1,-1,28,4940.0,71,71,3,4940.0],[1,1,39,-1,-1,28,3560.0,59,59,2,3560.0],[1,1,44,-1,-1,28,2910.0,97,97,0,0.0],[1,1,46,-1,-1,28,1860.0,62,62,0,0.0],[1,1,54,-1,-1,28,120.0,4,4,0,0.0],[1,1,57,-1,-1,28,2670.0,89,89,1,1380.0],[1,1,61,-1,-1,28,300.0,10,10,0,0.0],[1,1,63,-1,-1,28,990.0,33,33,0,0.0],[1,1,65,-1,-1,28,60.0,2,2,0,0.0],[1,1,66,-1,-1,28,0.0,61,61,0,0.0],[1,1,68,-1,-1,28,10280.0,216,216,6,10280.0],[1,1,69,-1,-1,28,0.0,1,1,0,0.0],[1,1,70,-1,-1,28,150.0,5,5,0,0.0],[1,1,72,-1,-1,28,60.0,2,2,0,0.0],[1,1,73,-1,-1,28,120.0,4,4,0,0.0],[1,1,77,-1,-1,28,1110.0,37,37,0,0.0],[1,1,79,-1,-1,28,3260.0,72,72,2,3260.0],[1,1,82,-1,-1,28,360.0,12,12,0,0.0],[1,1,88,-1,-1,28,0.0,6,6,0,0.0],[1,1,89,-1,-1,28,0.0,21,11,0,0.0],[1,1,90,-1,-1,28,0.0,19,18,0,0.0],[1,1,4,-1,-1,29,8200.0,220,220,5,8200.0],[1,1,6,-1,-1,29,105.0,3,3,0,0.0],[1,1,9,-1,-1,29,720.0,24,24,0,0.0],[1,1,10,-1,-1,29,120.0,4,4,0,0.0],[1,1,12,-1,-1,29,18580.0,333,333,11,18580.0],[1,1,13,-1,-1,29,2660.0,76,76,0,0.0],[1,1,16,-1,-1,29,1860.0,62,62,0,0.0],[1,1,22,-1,-1,29,90.0,3,3,0,0.0],[1,1,24,-1,-1,29,1950.0,65,65,0,0.0],[1,1,29,-1,-1,29,3260.0,85,85,2,3260.0],[1,1,38,-1,-1,29,60.0,2,2,0,0.0],[1,1,39,-1,-1,29,3760.0,106,106,2,3760.0],[1,1,44,-1,-1,29,1620.0,54,54,0,0.0],[1,1,46,-1,-1,29,2940.0,98,98,1,2680.0],[1,1,52,-1,-1,29,60.0,2,2,0,0.0],[1,1,54,-1,-1,29,330.0,11,11,0,0.0],[1,1,57,-1,-1,29,2640.0,88,88,0,0.0],[1,1,61,-1,-1,29,810.0,27,27,0,0.0],[1,1,63,-1,-1,29,1200.0,40,40,0,0.0],[1,1,65,-1,-1,29,30.0,1,1,0,0.0],[1,1,66,-1,-1,29,0.0,2,2,0,0.0],[1,1,68,-1,-1,29,1780.0,48,48,1,1780.0],[1,1,70,-1,-1,29,180.0,6,6,0,0.0],[1,1,72,-1,-1,29,60.0,2,2,0,0.0],[1,1,73,-1,-1,29,4620.0,154,154,0,0.0],[1,1,77,-1,-1,29,570.0,19,19,0,0.0],[1,1,79,-1,-1,29,1140.0,38,38,0,0.0],[1,1,82,-1,-1,29,0.0,12,12,0,0.0],[1,1,88,-1,-1,29,0.0,9,6,0,0.0],[1,1,89,-1,-1,29,0.0,21,12,0,0.0],[1,1,90,-1,-1,29,0.0,20,20,0,0.0],[1,1,1,-1,-1,30,210.0,7,7,0,0.0],[1,1,4,-1,-1,30,23625.0,675,675,12,22960.0],[1,1,6,-1,-1,30,30.0,1,1,0,0.0],[1,1,9,-1,-1,30,750.0,25,25,0,0.0],[1,1,10,-1,-1,30,1880.0,39,39,1,1880.0],[1,1,12,-1,-1,30,22480.0,702,702,11,22480.0],[1,1,13,-1,-1,30,1680.0,28,28,1,1680.0],[1,1,16,-1,-1,30,2460.0,82,82,1,1880.0],[1,1,18,-1,-1,30,30.0,1,1,0,0.0],[1,1,22,-1,-1,30,105.0,3,3,0,0.0],[1,1,24,-1,-1,30,2520.0,84,84,0,0.0],[1,1,28,-1,-1,30,0.0,1,1,0,0.0],[1,1,29,-1,-1,30,3090.0,103,103,2,3060.0],[1,1,31,-1,-1,30,5370.0,179,179,1,2680.0],[1,1,34,-1,-1,30,30.0,1,1,0,0.0],[1,1,38,-1,-1,30,150.0,5,5,0,0.0],[1,1,39,-1,-1,30,12560.0,238,238,7,12560.0],[1,1,44,-1,-1,30,2760.0,77,77,2,2760.0],[1,1,46,-1,-1,30,2970.0,99,99,1,1880.0],[1,1,52,-1,-1,30,210.0,7,7,0,0.0],[1,1,54,-1,-1,30,1380.0,25,25,1,1380.0],[1,1,57,-1,-1,30,3630.0,121,121,2,3060.0],[1,1,61,-1,-1,30,1260.0,42,42,0,0.0],[1,1,63,-1,-1,30,1530.0,51,51,0,0.0],[1,1,65,-1,-1,30,60.0,2,2,0,0.0],[1,1,66,-1,-1,30,1000.0,78,78,0,1000.0],[1,1,68,-1,-1,30,6930.0,231,231,2,3160.0],[1,1,69,-1,-1,30,0.0,1,1,0,0.0],[1,1,70,-1,-1,30,270.0,9,9,0,0.0],[1,1,72,-1,-1,30,210.0,7,7,0,0.0],[1,1,73,-1,-1,30,510.0,17,17,0,0.0],[1,1,77,-1,-1,30,1470.0,49,49,0,0.0],[1,1,79,-1,-1,30,8310.0,277,277,4,7120.0],[1,1,82,-1,-1,30,300.0,10,10,0,0.0],[1,1,87,-1,-1,30,0.0,25,25,0,0.0],[1,1,88,-1,-1,30,0.0,7,3,0,0.0],[1,1,89,-1,-1,30,0.0,20,17,0,0.0],[1,1,90,-1,-1,30,0.0,25,24,0,0.0],[1,1,1,-1,-1,31,1880.0,9,9,1,1880.0],[1,1,4,-1,-1,31,12880.0,368,368,7,12260.0],[1,1,10,-1,-1,31,315.0,9,9,0,0.0],[1,1,12,-1,-1,31,12680.0,234,234,6,12680.0],[1,1,13,-1,-1,31,2580.0,86,86,0,0.0],[1,1,16,-1,-1,31,1590.0,53,53,0,0.0],[1,1,22,-1,-1,31,140.0,4,4,0,0.0],[1,1,23,-1,-1,31,690.0,23,23,0,0.0],[1,1,24,-1,-1,31,480.0,16,16,0,0.0],[1,1,29,-1,-1,31,1380.0,25,25,1,1380.0],[1,1,31,-1,-1,31,10460.0,174,174,7,10460.0],[1,1,34,-1,-1,31,30.0,1,1,0,0.0],[1,1,38,-1,-1,31,180.0,6,6,0,0.0],[1,1,39,-1,-1,31,9080.0,96,96,6,9080.0],[1,1,42,-1,-1,31,0.0,1,1,0,0.0],[1,1,44,-1,-1,31,3060.0,72,72,2,3060.0],[1,1,46,-1,-1,31,1350.0,45,45,0,0.0],[1,1,49,-1,-1,31,60.0,2,2,0,0.0],[1,1,52,-1,-1,31,240.0,8,8,0,0.0],[1,1,54,-1,-1,31,300.0,10,10,0,0.0],[1,1,57,-1,-1,31,2680.0,39,39,1,2680.0],[1,1,61,-1,-1,31,4060.0,48,48,2,4060.0],[1,1,63,-1,-1,31,1410.0,47,47,1,1380.0],[1,1,65,-1,-1,31,180.0,6,6,0,0.0],[1,1,66,-1,-1,31,1680.0,36,36,1,1680.0],[1,1,68,-1,-1,31,13640.0,226,226,8,13640.0],[1,1,70,-1,-1,31,180.0,6,6,0,0.0],[1,1,73,-1,-1,31,300.0,10,10,0,0.0],[1,1,77,-1,-1,31,1350.0,45,45,0,0.0],[1,1,79,-1,-1,31,3920.0,112,112,2,3260.0],[1,1,82,-1,-1,31,330.0,11,11,0,0.0],[1,1,87,-1,-1,31,0.0,6,6,0,0.0],[1,1,88,-1,-1,31,0.0,3,0,0,0.0],[1,1,89,-1,-1,31,0.0,10,4,0,0.0],[1,1,90,-1,-1,31,0.0,2,0,0,0.0],[1,1,4,-1,-1,32,7735.0,221,221,1,2680.0],[1,1,9,-1,-1,32,300.0,10,10,0,0.0],[1,1,10,-1,-1,32,2180.0,21,21,1,2180.0],[1,1,12,-1,-1,32,120.0,4,4,0,0.0],[1,1,13,-1,-1,32,840.0,28,28,0,0.0],[1,1,16,-1,-1,32,750.0,25,25,0,0.0],[1,1,22,-1,-1,32,70.0,2,2,0,0.0],[1,1,23,-1,-1,32,960.0,32,32,0,0.0],[1,1,24,-1,-1,32,390.0,13,13,0,0.0],[1,1,29,-1,-1,32,4560.0,85,85,2,4560.0],[1,1,31,-1,-1,32,9920.0,233,233,4,9920.0],[1,1,38,-1,-1,32,90.0,3,3,0,0.0],[1,1,39,-1,-1,32,8320.0,82,82,4,8320.0],[1,1,44,-1,-1,32,4320.0,144,144,1,2180.0],[1,1,46,-1,-1,32,1290.0,43,43,0,0.0],[1,1,47,-1,-1,32,60.0,2,2,0,0.0],[1,1,52,-1,-1,32,840.0,28,28,0,0.0],[1,1,54,-1,-1,32,150.0,5,5,0,0.0],[1,1,57,-1,-1,32,2520.0,84,84,1,2180.0],[1,1,60,-1,-1,32,2680.0,34,34,1,2680.0],[1,1,61,-1,-1,32,810.0,27,27,0,0.0],[1,1,63,-1,-1,32,1320.0,44,44,0,0.0],[1,1,65,-1,-1,32,60.0,2,2,0,0.0],[1,1,66,-1,-1,32,488.0,61,61,0,0.0],[1,1,68,-1,-1,32,3540.0,118,118,1,1680.0],[1,1,70,-1,-1,32,240.0,8,8,0,0.0],[1,1,72,-1,-1,32,30.0,1,1,0,0.0],[1,1,73,-1,-1,32,2160.0,72,72,0,0.0],[1,1,77,-1,-1,32,1020.0,34,34,0,0.0],[1,1,79,-1,-1,32,8505.0,243,243,1,2680.0],[1,1,82,-1,-1,32,30.0,1,1,0,0.0],[1,1,87,-1,-1,32,0.0,8,8,0,0.0],[1,1,88,-1,-1,32,0.0,5,4,0,0.0],[1,1,89,-1,-1,32,440.0,17,11,0,880.0],[1,1,90,-1,-1,32,0.0,16,15,0,0.0],[1,1,4,-1,-1,33,24395.0,697,697,0,0.0],[1,1,6,-1,-1,33,30.0,1,1,0,0.0],[1,1,9,-1,-1,33,90.0,3,3,0,0.0],[1,1,10,-1,-1,33,105.0,3,3,0,0.0],[1,1,12,-1,-1,33,240.0,8,8,0,0.0],[1,1,13,-1,-1,33,1860.0,62,62,0,0.0],[1,1,14,-1,-1,33,4050.0,135,135,0,0.0],[1,1,16,-1,-1,33,2340.0,78,78,0,0.0],[1,1,22,-1,-1,33,105.0,3,3,0,0.0],[1,1,23,-1,-1,33,990.0,33,33,0,0.0],[1,1,24,-1,-1,33,510.0,17,17,0,0.0],[1,1,29,-1,-1,33,8490.0,283,283,0,0.0],[1,1,31,-1,-1,33,11070.0,369,369,0,0.0],[1,1,38,-1,-1,33,60.0,2,2,0,0.0],[1,1,39,-1,-1,33,3090.0,103,103,0,0.0],[1,1,42,-1,-1,33,0.0,1,1,0,0.0],[1,1,44,-1,-1,33,11250.0,375,375,0,0.0],[1,1,45,-1,-1,33,30.0,1,1,0,0.0],[1,1,46,-1,-1,33,2640.0,88,88,0,0.0],[1,1,47,-1,-1,33,60.0,2,2,0,0.0],[1,1,52,-1,-1,33,1530.0,51,51,0,0.0],[1,1,54,-1,-1,33,330.0,11,11,0,0.0],[1,1,57,-1,-1,33,2040.0,68,68,0,0.0],[1,1,60,-1,-1,33,330.0,11,11,0,0.0],[1,1,61,-1,-1,33,990.0,33,33,0,0.0],[1,1,63,-1,-1,33,1800.0,60,60,0,0.0],[1,1,65,-1,-1,33,390.0,13,13,0,0.0],[1,1,66,-1,-1,33,992.0,124,124,0,0.0],[1,1,68,-1,-1,33,3150.0,105,105,0,0.0],[1,1,70,-1,-1,33,30.0,1,1,0,0.0],[1,1,72,-1,-1,33,60.0,2,2,0,0.0],[1,1,73,-1,-1,33,30.0,1,1,0,0.0],[1,1,77,-1,-1,33,2520.0,84,84,0,0.0],[1,1,78,-1,-1,33,90.0,3,3,0,0.0],[1,1,79,-1,-1,33,13475.0,385,385,0,0.0],[1,1,87,-1,-1,33,0.0,1,1,0,0.0],[1,1,88,-1,-1,33,0.0,6,4,0,0.0],[1,1,89,-1,-1,33,0.0,11,9,0,0.0],[1,1,90,-1,-1,33,0.0,5,4,0,0.0]]};
+    </script>
+    <script>
+      (function () {
+        const DATA = window.__DASHBOARD_DATA__ || {};
+        const dicts = DATA.dicts || {};
+        const meta = DATA.meta || {};
+        const rowsRaw = Array.isArray(DATA.rows) ? DATA.rows : [];
+        const rootStyle = getComputedStyle(document.documentElement);
+        const CHART_GRID = rootStyle.getPropertyValue("--chart-grid").trim() || "#e5e7eb";
+        const CHART_TEXT = rootStyle.getPropertyValue("--chart-text").trim() || "#0f172a";
+        const CHART_SUBTEXT = rootStyle.getPropertyValue("--chart-subtext").trim() || "#475569";
+ 
+        const el = {
+          dataStatus: document.getElementById("dataStatus"),
+          dataScope: document.getElementById("dataScope"),
+          projectHint: document.getElementById("projectHint"),
+          tabStandard: document.getElementById("tabStandard"),
+          tabNonStandard: document.getElementById("tabNonStandard"),
+          tabStructure: document.getElementById("tabStructure"),
+          compareSection: document.getElementById("compareSection"),
+          structureSection: document.getElementById("structureSection"),
+          structTableOverall: document.getElementById("structTableOverall"),
+          structTableStd: document.getElementById("structTableStd"),
+          structTableNon: document.getElementById("structTableNon"),
+          structShare: document.getElementById("structShare"),
+          structROI: document.getElementById("structROI"),
+          structConv: document.getElementById("structConv"),
+          structCAC: document.getElementById("structCAC"),
+          structAddValue: document.getElementById("structAddValue"),
+          structDrillCard: document.getElementById("structDrillCard"),
+          structDrillTitle: document.getElementById("structDrillTitle"),
+          structDrillTable: document.getElementById("structDrillTable"),
+          structDrillClose: document.getElementById("structDrillClose"),
+          yearMsBtn: document.getElementById("yearMsBtn"),
+          yearMsLabel: document.getElementById("yearMsLabel"),
+          yearMsBadge: document.getElementById("yearMsBadge"),
+          yearMsPanel: document.getElementById("yearMsPanel"),
+          yearMsOptions: document.getElementById("yearMsOptions"),
+          yearMsSearch: document.getElementById("yearMsSearch"),
+          yearMsSelectAll: document.getElementById("yearMsSelectAll"),
+          yearMsClear: document.getElementById("yearMsClear"),
+          yearMsCount: document.getElementById("yearMsCount"),
+          monthMsBtn: document.getElementById("monthMsBtn"),
+          monthMsLabel: document.getElementById("monthMsLabel"),
+          monthMsBadge: document.getElementById("monthMsBadge"),
+          monthMsPanel: document.getElementById("monthMsPanel"),
+          monthMsOptions: document.getElementById("monthMsOptions"),
+          monthMsSearch: document.getElementById("monthMsSearch"),
+          monthMsSelectAll: document.getElementById("monthMsSelectAll"),
+          monthMsClear: document.getElementById("monthMsClear"),
+          monthMsCount: document.getElementById("monthMsCount"),
+          projectPeriodMsBtn: document.getElementById("projectPeriodMsBtn"),
+          projectPeriodMsLabel: document.getElementById("projectPeriodMsLabel"),
+          projectPeriodMsBadge: document.getElementById("projectPeriodMsBadge"),
+          projectPeriodMsPanel: document.getElementById("projectPeriodMsPanel"),
+          projectPeriodMsOptions: document.getElementById("projectPeriodMsOptions"),
+          projectPeriodMsSearch: document.getElementById("projectPeriodMsSearch"),
+          projectPeriodMsSelectAll: document.getElementById("projectPeriodMsSelectAll"),
+          projectPeriodMsClear: document.getElementById("projectPeriodMsClear"),
+          projectPeriodMsCount: document.getElementById("projectPeriodMsCount"),
+          overviewMeta: document.getElementById("overviewMeta"),
+          searchInput: document.getElementById("searchInput"),
+          platformList: document.getElementById("platformList"),
+          leftEmptyHint: document.getElementById("leftEmptyHint"),
+          rightEmptyHint: document.getElementById("rightEmptyHint"),
+          activePlatformLabel: document.getElementById("activePlatformLabel"),
+          platformMeta: document.getElementById("platformMeta"),
+          ovROI: document.getElementById("ovROI"),
+          ovAddValue: document.getElementById("ovAddValue"),
+          ovLeadShare: document.getElementById("ovLeadShare"),
+          ovCAC: document.getElementById("ovCAC"),
+          ovConv: document.getElementById("ovConv"),
+          ovAddRate: document.getElementById("ovAddRate"),
+          plROI: document.getElementById("plROI"),
+          plAddValue: document.getElementById("plAddValue"),
+          plLeadShare: document.getElementById("plLeadShare"),
+          plCAC: document.getElementById("plCAC"),
+          plConv: document.getElementById("plConv"),
+          plAddRate: document.getElementById("plAddRate"),
+        };
+ 
+        const idx = {
+          channelBucket: 0,
+          project: 1,
+          platform: 2,
+          year: 3,
+          month: 4,
+          periodNum: 5,
+          cost: 6,
+          leads: 7,
+          adds: 8,
+          l1Orders: 9,
+          l1Value: 10,
+        };
+ 
+        const PROJECTS = Array.isArray(dicts.project) ? dicts.project : [];
+        const PROJECT_COLOR_PALETTE = ["#38bdf8", "#22c55e", "#f59e0b", "#a78bfa", "#fb7185", "#34d399", "#f97316", "#60a5fa", "#e879f9", "#facc15"];
+        const COLORS_BY_PROJECT = {};
+        for (let i = 0; i < PROJECTS.length; i++) {
+          COLORS_BY_PROJECT[PROJECTS[i]] = PROJECT_COLOR_PALETTE[i % PROJECT_COLOR_PALETTE.length];
+        }
+        const STRUCT_BUCKETS = [
+          { key: "standard", label: "标准", bucket: "标准渠道", color: "#3b82f6" },
+          { key: "nonstandard", label: "非标", bucket: "非标渠道", color: "#f97316" },
+        ];
+ 
+        function asNum(n) {
+          const x = Number(n);
+          return Number.isFinite(x) ? x : 0;
+        }
+ 
+        function round2(x) {
+          return Math.round((asNum(x) + 1e-12) * 100) / 100;
+        }
+ 
+        function fmtInt(x) {
+          return String(Math.round(asNum(x)));
+        }
+ 
+        function fmt2(x) {
+          return String(round2(x).toFixed(2));
+        }
+ 
+        function fmtPct1(x) {
+          return (asNum(x)).toFixed(1) + "%";
+        }
+ 
+        function decodeRow(a) {
+          return {
+            channelBucket: (dicts.channelBucket || [])[a[idx.channelBucket]] || "非标渠道",
+            project: (dicts.project || [])[a[idx.project]] || "未知",
+            platform: (dicts.platform || [])[a[idx.platform]] || "未知",
+            year: a[idx.year],
+            month: a[idx.month],
+            periodNum: a[idx.periodNum],
+            cost: a[idx.cost],
+            leads: a[idx.leads],
+            adds: a[idx.adds],
+            l1Orders: a[idx.l1Orders],
+            l1Value: a[idx.l1Value],
+          };
+        }
+ 
+        const rows = rowsRaw.map(decodeRow);
+ 
+        const state = {
+          mainTab: "structure",
+          channelBucket: "标准渠道",
+          years: new Set(),
+          months: new Set(),
+          projectPeriods: new Set(),
+          platform: "__NONE__",
+          search: "",
+          structDrillProject: "",
+          structDrillMode: "overall",
+        };
+ 
+        function uniq(arr) {
+          return Array.from(new Set(arr));
+        }
+ 
+        function sortNumAsc(a, b) {
+          return asNum(a) - asNum(b);
+        }
+ 
+        function sortNumDesc(a, b) {
+          return asNum(b) - asNum(a);
+        }
+ 
+        function projectPeriodLabel(project, periodNum) {
+          return String(project) + String(periodNum) + "期";
+        }
+ 
+        function applyFiltersBase() {
+          return rows.filter((r) => {
+            if (r.channelBucket !== state.channelBucket) return false;
+            if (state.years.size && !state.years.has(asNum(r.year))) return false;
+            if (state.months.size && !state.months.has(asNum(r.month))) return false;
+            return true;
+          });
+        }
+
+        function applyFiltersAllChannels() {
+          return rows.filter((r) => {
+            if (state.years.size && !state.years.has(asNum(r.year))) return false;
+            if (state.months.size && !state.months.has(asNum(r.month))) return false;
+            return true;
+          });
+        }
+ 
+        function applyFiltersWithPeriods(baseRows) {
+          if (!state.projectPeriods.size) return baseRows;
+          return baseRows.filter((r) => state.projectPeriods.has(projectPeriodLabel(r.project, r.periodNum)));
+        }
+ 
+        function setEmptyHint(node, text) {
+          if (!node) return;
+          const t = String(text || "");
+          node.textContent = t;
+          node.style.display = t ? "block" : "none";
+        }
+
+        function refreshTopTabs() {
+          const inCompare = state.mainTab === "compare";
+          el.tabStandard.classList.toggle("active", inCompare && state.channelBucket === "标准渠道");
+          el.tabNonStandard.classList.toggle("active", inCompare && state.channelBucket === "非标渠道");
+          el.tabStructure.classList.toggle("active", state.mainTab === "structure");
+          if (el.compareSection) el.compareSection.style.display = inCompare ? "" : "none";
+          if (el.structureSection) el.structureSection.style.display = state.mainTab === "structure" ? "" : "none";
+        }
+
+        function setMainTab(tab) {
+          state.mainTab = tab;
+          refreshTopTabs();
+          renderAll();
+        }
+
+        const msRuntime = {
+          year: { options: [], search: "", onChange: null },
+          month: { options: [], search: "", onChange: null },
+          period: { options: [], search: "", onChange: null },
+        };
+
+        function closeAllPanels() {
+          el.yearMsPanel.classList.remove("open");
+          el.yearMsBtn.classList.remove("isOpen");
+          el.monthMsPanel.classList.remove("open");
+          el.monthMsBtn.classList.remove("isOpen");
+          el.projectPeriodMsPanel.classList.remove("open");
+          el.projectPeriodMsBtn.classList.remove("isOpen");
+        }
+
+        function togglePanel(panel) {
+          const isOpen = panel.classList.contains("open");
+          closeAllPanels();
+          if (!isOpen) {
+            panel.classList.add("open");
+            if (panel === el.yearMsPanel) el.yearMsBtn.classList.add("isOpen");
+            if (panel === el.monthMsPanel) el.monthMsBtn.classList.add("isOpen");
+            if (panel === el.projectPeriodMsPanel) el.projectPeriodMsBtn.classList.add("isOpen");
+            setTimeout(() => {
+              if (panel === el.yearMsPanel && el.yearMsSearch) el.yearMsSearch.focus();
+              if (panel === el.monthMsPanel && el.monthMsSearch) el.monthMsSearch.focus();
+              if (panel === el.projectPeriodMsPanel && el.projectPeriodMsSearch) el.projectPeriodMsSearch.focus();
+            }, 0);
+          }
+        }
+
+        function normalizeText(s) {
+          return String(s || "").trim().toLowerCase();
+        }
+
+        function optionMatches(opt, q) {
+          const qq = normalizeText(q);
+          if (!qq) return true;
+          const t = normalizeText(opt.label);
+          const v = normalizeText(opt.value);
+          const g = normalizeText(opt.project || opt.group || "");
+          return t.includes(qq) || v.includes(qq) || g.includes(qq);
+        }
+
+        function renderMultiSelectOptions(container, options, selectedSet, onChange, groupKey, searchText) {
+          container.innerHTML = "";
+          let lastGroup = null;
+          for (const opt of options) {
+            if (!optionMatches(opt, searchText)) continue;
+            const g = groupKey ? String(opt[groupKey] || "") : "";
+            if (groupKey && g && g !== lastGroup) {
+              const gh = document.createElement("div");
+              gh.className = "msGroup";
+              gh.textContent = g;
+              container.appendChild(gh);
+              lastGroup = g;
+            }
+
+            const row = document.createElement("label");
+            row.className = "msOpt";
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.checked = selectedSet.has(opt.value);
+            cb.onkeydown = (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                cb.checked = !cb.checked;
+                cb.dispatchEvent(new Event("change", { bubbles: true }));
+              }
+            };
+            cb.onchange = () => {
+              if (cb.checked) selectedSet.add(opt.value);
+              else selectedSet.delete(opt.value);
+              onChange();
+            };
+            const txt = document.createElement("div");
+            txt.className = "txt";
+            txt.textContent = opt.label;
+            row.appendChild(cb);
+            row.appendChild(txt);
+            container.appendChild(row);
+          }
+        }
+
+        function labelForSelection(selectedSet, allOptions, emptyLabel, mode) {
+          const n = selectedSet.size;
+          const total = allOptions.length;
+          if (!total) return emptyLabel || "无数据";
+          if (!n || n === total) return "全部";
+          if (mode === "list") {
+            const selectedLabels = [];
+            for (const opt of allOptions) {
+              if (!selectedSet.has(opt.value)) continue;
+              selectedLabels.push(opt.label);
+              if (selectedLabels.length >= 3) break;
+            }
+            const extra = n > selectedLabels.length ? ` +${n - selectedLabels.length}` : "";
+            return selectedLabels.join(" / ") + extra;
+          }
+          return `已选 ${n}`;
+        }
+
+        function setBadge(badgeEl, selectedSet, allOptions) {
+          const n = selectedSet.size;
+          const total = allOptions.length;
+          if (!total || !n || n === total) {
+            badgeEl.style.display = "none";
+            badgeEl.textContent = "";
+            return;
+          }
+          badgeEl.style.display = "inline-flex";
+          badgeEl.textContent = String(n);
+        }
+
+        function setCount(countEl, selectedSet, allOptions, searchText) {
+          const total = allOptions.length;
+          const n = selectedSet.size;
+          const visible = allOptions.filter((o) => optionMatches(o, searchText)).length;
+          countEl.textContent = `已选 ${n} / ${total}（当前列表 ${visible}）`;
+        }
+
+        function refreshYearUI(onChange) {
+          const options = msRuntime.year.options || [];
+          renderMultiSelectOptions(el.yearMsOptions, options, state.years, onChange, null, msRuntime.year.search);
+          el.yearMsLabel.textContent = labelForSelection(state.years, options, "无年度", "list");
+          setBadge(el.yearMsBadge, state.years, options);
+          setCount(el.yearMsCount, state.years, options, msRuntime.year.search);
+        }
+
+        function refreshMonthUI(onChange) {
+          const options = msRuntime.month.options || [];
+          renderMultiSelectOptions(el.monthMsOptions, options, state.months, onChange, null, msRuntime.month.search);
+          el.monthMsLabel.textContent = labelForSelection(state.months, options, "无月份", "list");
+          setBadge(el.monthMsBadge, state.months, options);
+          setCount(el.monthMsCount, state.months, options, msRuntime.month.search);
+        }
+
+        function refreshPeriodUI(onChange) {
+          const options = msRuntime.period.options || [];
+          renderMultiSelectOptions(el.projectPeriodMsOptions, options, state.projectPeriods, onChange, "project", msRuntime.period.search);
+          const total = options.length;
+          const n = state.projectPeriods.size;
+          if (!total) el.projectPeriodMsLabel.textContent = "无营期";
+          else if (!n || n === total) el.projectPeriodMsLabel.textContent = "全部";
+          else el.projectPeriodMsLabel.textContent = formatProjectPeriodsForScope() || `已选 ${n}`;
+          setBadge(el.projectPeriodMsBadge, state.projectPeriods, options);
+          setCount(el.projectPeriodMsCount, state.projectPeriods, options, msRuntime.period.search);
+        }
+
+        function buildYearOptions() {
+          const years = uniq(rows.filter((r) => r.channelBucket === state.channelBucket).map((r) => r.year)).sort(sortNumDesc);
+          const options = years.map((y) => ({ value: y, label: asNum(y) > 0 ? String(y) : "未知" }));
+          msRuntime.year.options = options;
+          state.years = new Set(Array.from(state.years.values()).filter((y) => years.includes(y)));
+          const onChange = () => {
+            if (!state.years.size) for (const opt of msRuntime.year.options) state.years.add(opt.value);
+            buildMonthOptions();
+            const base = applyFiltersBase();
+            state.projectPeriods = computeLatestPeriodsByProject(base);
+            buildProjectPeriodOptions(base);
+            state.platform = "__NONE__";
+            refreshYearUI(onChange);
+            renderAll();
+          };
+          msRuntime.year.onChange = onChange;
+          if (!state.years.size) for (const opt of msRuntime.year.options) state.years.add(opt.value);
+          refreshYearUI(onChange);
+        }
+ 
+        function buildMonthOptions() {
+          const base = rows.filter((r) => {
+            if (r.channelBucket !== state.channelBucket) return false;
+            if (state.years.size && !state.years.has(asNum(r.year))) return false;
+            return true;
+          });
+          const months = uniq(base.map((r) => r.month)).sort((a, b) => {
+            const aa = asNum(a), bb = asNum(b);
+            const aKnown = aa >= 1 && aa <= 12;
+            const bKnown = bb >= 1 && bb <= 12;
+            if (aKnown && bKnown) return aa - bb;
+            if (aKnown && !bKnown) return -1;
+            if (!aKnown && bKnown) return 1;
+            return aa - bb;
+          });
+          const options = months.map((m) => {
+            const mm = asNum(m);
+            return { value: m, label: mm >= 1 && mm <= 12 ? String(mm) + "月" : "未知" };
+          });
+          msRuntime.month.options = options;
+          state.months = new Set(Array.from(state.months.values()).filter((m) => months.includes(m)));
+          const onChange = () => {
+            if (!state.months.size) for (const opt of msRuntime.month.options) state.months.add(opt.value);
+            const base2 = applyFiltersBase();
+            state.projectPeriods = computeLatestPeriodsByProject(base2);
+            buildProjectPeriodOptions(base2);
+            state.platform = "__NONE__";
+            refreshMonthUI(onChange);
+            renderAll();
+          };
+          msRuntime.month.onChange = onChange;
+          if (!state.months.size) for (const opt of msRuntime.month.options) state.months.add(opt.value);
+          refreshMonthUI(onChange);
+        }
+ 
+        function computeLatestPeriodsByProject(baseRows) {
+          const byProject = new Map();
+          for (const r of baseRows) {
+            if (!PROJECTS.includes(r.project)) continue;
+            if (!byProject.has(r.project)) byProject.set(r.project, new Set());
+            byProject.get(r.project).add(asNum(r.periodNum));
+          }
+          const selected = new Set();
+          for (const p of PROJECTS) {
+            const nums = Array.from(byProject.get(p) || []).sort(sortNumDesc);
+            for (const n of nums.slice(0, 3)) {
+              selected.add(projectPeriodLabel(p, n));
+            }
+          }
+          return selected;
+        }
+ 
+        function buildProjectPeriodOptions(baseRows) {
+          const byProject = new Map();
+          for (const r of baseRows) {
+            if (!PROJECTS.includes(r.project)) continue;
+            const list = byProject.get(r.project) || [];
+            list.push(asNum(r.periodNum));
+            byProject.set(r.project, list);
+          }
+          const options = [];
+          for (const p of PROJECTS) {
+            const nums = uniq(byProject.get(p) || []).sort(sortNumDesc);
+            for (const n of nums) {
+              options.push({
+                value: projectPeriodLabel(p, n),
+                label: String(n) + "期",
+                project: p,
+              });
+            }
+          }
+          msRuntime.period.options = options;
+          const optionValues = new Set(options.map((x) => x.value));
+          state.projectPeriods = new Set(Array.from(state.projectPeriods.values()).filter((v) => optionValues.has(v)));
+          function pickDefaultProjectPeriods() {
+            const wanted = new Set();
+            for (const opt of options) {
+              const p = String(opt.project || "");
+              const m = String(opt.value || "").match(/(\d+)期$/);
+              const n = m ? asNum(m[1]) : 0;
+              if (p.includes("梓洋") && n === 1) wanted.add(opt.value);
+              if (p.includes("白璇") && n === 31) wanted.add(opt.value);
+            }
+            return wanted;
+          }
+          const ensureDefault = () => {
+            if (!state.projectPeriods.size) {
+              const preferred = pickDefaultProjectPeriods();
+              state.projectPeriods = preferred.size ? preferred : computeLatestPeriodsByProject(baseRows);
+              state.projectPeriods = new Set(Array.from(state.projectPeriods.values()).filter((v) => optionValues.has(v)));
+            }
+          };
+          ensureDefault();
+
+          const onChange = () => {
+            ensureDefault();
+            state.platform = "__NONE__";
+            refreshPeriodUI(onChange);
+            renderAll();
+          };
+          msRuntime.period.onChange = onChange;
+          refreshPeriodUI(onChange);
+        }
+ 
+        function syncProjectPeriodsFromUI() {
+          return;
+        }
+ 
+        function syncYearsFromUI() {
+          return;
+        }
+
+        function syncMonthsFromUI() {
+          return;
+        }
+
+        function selectedPeriodNumsByProject() {
+          const out = new Map();
+          for (const p of PROJECTS) out.set(p, []);
+          for (const key of state.projectPeriods.values()) {
+            const s = String(key);
+            for (const p of PROJECTS) {
+              if (s.startsWith(p) && s.endsWith("期")) {
+                const n = asNum(s.slice(p.length, -1));
+                if (!n) continue;
+                out.get(p).push(n);
+              }
+            }
+          }
+          for (const p of PROJECTS) {
+            const nums = uniq(out.get(p) || []).sort(sortNumAsc);
+            out.set(p, nums);
+          }
+          return out;
+        }
+
+        function formatProjectPeriodsForScope() {
+          const byProject = selectedPeriodNumsByProject();
+          const parts = [];
+          for (const p of PROJECTS) {
+            const nums = byProject.get(p) || [];
+            if (!nums.length) continue;
+            parts.push(`${p}【${nums.map((n) => String(n) + "期").join("，")}】`);
+          }
+          return parts.join("｜");
+        }
+
+        function buildAggByProjectPeriod(filteredRows) {
+          const m = new Map();
+          for (const r of filteredRows) {
+            const key = String(r.project) + "|" + String(r.periodNum);
+            if (!m.has(key)) m.set(key, { project: r.project, periodNum: asNum(r.periodNum), cost: 0, leads: 0, adds: 0, l1Orders: 0, l1Value: 0 });
+            const v = m.get(key);
+            v.cost += asNum(r.cost);
+            v.leads += asNum(r.leads);
+            v.adds += asNum(r.adds);
+            v.l1Orders += asNum(r.l1Orders);
+            v.l1Value += asNum(r.l1Value);
+          }
+          return m;
+        }
+ 
+        function safeDiv(a, b) {
+          const aa = asNum(a);
+          const bb = asNum(b);
+          return bb ? aa / bb : 0;
+        }
+ 
+        function getCanvasCtx(canvas) {
+          const ctx = canvas.getContext("2d");
+          const dpr = window.devicePixelRatio || 1;
+          const rect = canvas.getBoundingClientRect();
+          const w = Math.max(1, Math.floor(rect.width * dpr));
+          const h = Math.max(1, Math.floor(rect.height * dpr));
+          if (canvas.width !== w) canvas.width = w;
+          if (canvas.height !== h) canvas.height = h;
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          return { ctx, w, h, dpr };
+        }
+ 
+        function computeNiceMax(vMax) {
+          const x = asNum(vMax);
+          if (x <= 0) return 1;
+          const pow = Math.pow(10, Math.floor(Math.log10(x)));
+          const r = x / pow;
+          let m = 1;
+          if (r <= 1) m = 1;
+          else if (r <= 2) m = 2;
+          else if (r <= 5) m = 5;
+          else m = 10;
+          return m * pow;
+        }
+ 
+        function drawGroupedBarChart(canvas, cfg) {
+          const { ctx, w, h, dpr } = getCanvasCtx(canvas);
+          const groups = Array.isArray(cfg.groups) ? cfg.groups : [];
+          const formatter = cfg.formatter || ((x) => String(x));
+          const showItemLabels = cfg.showItemLabels !== false;
+ 
+          const paddingTop = 18 * dpr;
+          const paddingRight = 16 * dpr;
+          const paddingBottom = (showItemLabels ? 74 : 48) * dpr;
+          const paddingLeft = 56 * dpr;
+          const plotW = w - paddingLeft - paddingRight;
+          const plotH = h - paddingTop - paddingBottom;
+ 
+          ctx.clearRect(0, 0, w, h);
+ 
+          const flat = [];
+          for (const g of groups) {
+            const items = Array.isArray(g.items) ? g.items : [];
+            for (const it of items) {
+              flat.push({
+                group: String(g.group || ""),
+                label: String(it.label || ""),
+                color: String(it.color || "#38bdf8"),
+                value: asNum(it.value),
+              });
+            }
+          }
+
+          const vMax = Math.max(0, ...flat.map((x) => asNum(x.value)));
+          const yMax = computeNiceMax(vMax);
+ 
+          ctx.save();
+          ctx.strokeStyle = CHART_GRID;
+          ctx.lineWidth = 1 * dpr;
+          for (let i = 0; i <= 4; i++) {
+            const y = paddingTop + (plotH * i) / 4;
+            ctx.beginPath();
+            ctx.moveTo(paddingLeft, y);
+            ctx.lineTo(paddingLeft + plotW, y);
+            ctx.stroke();
+          }
+          ctx.restore();
+ 
+          ctx.save();
+          ctx.fillStyle = CHART_SUBTEXT;
+          ctx.font = `${12 * dpr}px sans-serif`;
+          ctx.textAlign = "right";
+          ctx.textBaseline = "middle";
+          for (let i = 0; i <= 4; i++) {
+            const t = 1 - i / 4;
+            const v = yMax * t;
+            const y = paddingTop + (plotH * i) / 4;
+            ctx.fillText(formatter(v), paddingLeft - 8 * dpr, y);
+          }
+          ctx.restore();
+ 
+          const groupGap = 26 * dpr;
+          const barGap = 10 * dpr;
+          const barCount = Math.max(1, flat.length);
+          const barW = Math.min(64 * dpr, Math.max(14 * dpr, (plotW - groupGap * Math.max(0, groups.length - 1) - barGap * Math.max(0, barCount - groups.length)) / barCount));
+
+          let totalW = 0;
+          for (let gi = 0; gi < groups.length; gi++) {
+            const items = Array.isArray(groups[gi].items) ? groups[gi].items : [];
+            const n = items.length || 0;
+            if (!n) continue;
+            if (totalW) totalW += groupGap;
+            totalW += barW * n + barGap * Math.max(0, n - 1);
+          }
+          if (!totalW) totalW = barW;
+          const x0 = paddingLeft + (plotW - totalW) / 2;
+ 
+          ctx.save();
+          ctx.font = `${11 * dpr}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.fillStyle = CHART_SUBTEXT;
+
+          let x = x0;
+          for (let gi = 0; gi < groups.length; gi++) {
+            const g = groups[gi];
+            const groupName = String(g.group || "");
+            const items = Array.isArray(g.items) ? g.items : [];
+            if (!items.length) continue;
+
+            const groupStartX = x;
+            for (let i = 0; i < items.length; i++) {
+              const it = items[i];
+              const v = asNum(it.value);
+              const barH = yMax ? (v / yMax) * plotH : 0;
+              const y = paddingTop + plotH - barH;
+              const color = String(it.color || "#38bdf8");
+              const label = String(it.label || "");
+
+              ctx.fillStyle = color;
+              ctx.fillRect(x, y, barW, barH);
+
+              ctx.fillStyle = CHART_TEXT;
+              ctx.textBaseline = "bottom";
+              ctx.fillText(formatter(v), x + barW / 2, y - 6 * dpr);
+
+              ctx.textBaseline = "top";
+              ctx.fillStyle = CHART_SUBTEXT;
+              if (showItemLabels) ctx.fillText(label, x + barW / 2, paddingTop + plotH + 28 * dpr);
+
+              x += barW;
+              if (i < items.length - 1) x += barGap;
+            }
+
+            const groupEndX = x;
+            const center = (groupStartX + groupEndX) / 2;
+            ctx.fillStyle = CHART_SUBTEXT;
+            ctx.textBaseline = "top";
+            ctx.fillText(groupName, center, paddingTop + plotH + 8 * dpr);
+
+            x += groupGap;
+          }
+          ctx.restore();
+        }
+
+        function drawStackedBarChart(canvas, cfg) {
+          const { ctx, w, h, dpr } = getCanvasCtx(canvas);
+          const items = Array.isArray(cfg.items) ? cfg.items : [];
+          const formatter = cfg.formatter || ((x) => String(x));
+
+          const paddingTop = 18 * dpr;
+          const paddingRight = 16 * dpr;
+          const paddingBottom = 68 * dpr;
+          const paddingLeft = 56 * dpr;
+          const plotW = w - paddingLeft - paddingRight;
+          const plotH = h - paddingTop - paddingBottom;
+
+          ctx.clearRect(0, 0, w, h);
+
+          const yMax = 100;
+
+          ctx.save();
+          ctx.strokeStyle = CHART_GRID;
+          ctx.lineWidth = 1 * dpr;
+          for (let i = 0; i <= 4; i++) {
+            const y = paddingTop + (plotH * i) / 4;
+            ctx.beginPath();
+            ctx.moveTo(paddingLeft, y);
+            ctx.lineTo(paddingLeft + plotW, y);
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          ctx.save();
+          ctx.fillStyle = CHART_SUBTEXT;
+          ctx.font = `${12 * dpr}px sans-serif`;
+          ctx.textAlign = "right";
+          ctx.textBaseline = "middle";
+          for (let i = 0; i <= 4; i++) {
+            const t = 1 - i / 4;
+            const v = yMax * t;
+            const y = paddingTop + (plotH * i) / 4;
+            ctx.fillText(formatter(v), paddingLeft - 8 * dpr, y);
+          }
+          ctx.restore();
+
+          const barGap = 16 * dpr;
+          const barW = Math.min(64 * dpr, Math.max(18 * dpr, (plotW - barGap * Math.max(0, items.length - 1)) / Math.max(1, items.length)));
+          let totalW = items.length ? barW * items.length + barGap * Math.max(0, items.length - 1) : barW;
+          const x0 = paddingLeft + (plotW - totalW) / 2;
+
+          ctx.save();
+          ctx.font = `${11 * dpr}px sans-serif`;
+          ctx.textAlign = "center";
+
+          let x = x0;
+          for (const it of items) {
+            const group = String(it.group || "");
+            const segs = Array.isArray(it.segs) ? it.segs : [];
+
+            let yCursor = paddingTop + plotH;
+            for (let si = 0; si < segs.length; si++) {
+              const s = segs[si] || {};
+              const v = Math.max(0, Math.min(100, asNum(s.value)));
+              const barH = (v / yMax) * plotH;
+              const y = yCursor - barH;
+              yCursor = y;
+
+              ctx.fillStyle = String(s.color || "#3b82f6");
+              ctx.fillRect(x, y, barW, barH);
+
+              const label = formatter(v);
+              if (barH >= 16 * dpr) {
+                ctx.fillStyle = "rgba(255,255,255,0.95)";
+                ctx.textBaseline = "middle";
+                ctx.fillText(label, x + barW / 2, y + barH / 2);
+              } else {
+                ctx.fillStyle = CHART_TEXT;
+                ctx.textBaseline = "bottom";
+                ctx.fillText(label, x + barW / 2, y - 4 * dpr);
+              }
+            }
+
+            ctx.fillStyle = CHART_SUBTEXT;
+            ctx.textBaseline = "top";
+            ctx.fillText(group, x + barW / 2, paddingTop + plotH + 8 * dpr);
+
+            x += barW + barGap;
+          }
+          ctx.restore();
+        }
+ 
+        function buildPlatformSummary(filteredRows) {
+          const byPlatform = new Map();
+          for (const r of filteredRows) {
+            const p = r.platform;
+            if (!byPlatform.has(p)) byPlatform.set(p, { platform: p, cost: 0, leads: 0, l1Value: 0, l1Orders: 0, projects: new Set() });
+            const v = byPlatform.get(p);
+            v.cost += asNum(r.cost);
+            v.leads += asNum(r.leads);
+            v.l1Value += asNum(r.l1Value);
+            v.l1Orders += asNum(r.l1Orders);
+            v.projects.add(String(r.project || "未知"));
+          }
+          const list = Array.from(byPlatform.values()).map((x) => ({ platform: x.platform, cost: x.cost, leads: x.leads, l1Value: x.l1Value, l1Orders: x.l1Orders, projectCnt: x.projects ? x.projects.size : 0 }));
+          list.sort((a, b) => b.projectCnt - a.projectCnt || b.leads - a.leads || b.l1Value - a.l1Value || String(a.platform).localeCompare(String(b.platform), "zh-CN"));
+          return list;
+        }
+ 
+        function renderPlatformList(filteredRows) {
+          const summary = buildPlatformSummary(filteredRows);
+          const q = String(state.search || "").trim().toLowerCase();
+          const filtered = summary.filter((s) => (q ? String(s.platform).toLowerCase().includes(q) : true));
+ 
+          if (!filtered.length) setEmptyHint(el.leftEmptyHint, "当前筛选条件下无投放平台数据（可调整筛选或切换页签）");
+          else setEmptyHint(el.leftEmptyHint, "");
+ 
+          if (!filtered.some((x) => x.platform === state.platform)) {
+            state.platform = filtered.length ? filtered[0].platform : "__NONE__";
+          }
+ 
+          el.platformList.innerHTML = "";
+          for (const s of filtered) {
+            const item = document.createElement("div");
+            item.className = "item" + (s.platform === state.platform ? " active" : "");
+            item.onclick = () => {
+              state.platform = s.platform;
+              renderAll();
+            };
+ 
+            const name = document.createElement("div");
+            name.className = "platName";
+            name.textContent = s.platform;
+ 
+            const projectCnt = document.createElement("div");
+            projectCnt.style.textAlign = "right";
+            projectCnt.textContent = fmtInt(s.projectCnt);
+
+            const leads = document.createElement("div");
+            leads.style.textAlign = "right";
+            leads.textContent = fmtInt(s.leads);
+ 
+            const roi = document.createElement("div");
+            roi.style.textAlign = "right";
+            roi.textContent = fmt2(safeDiv(s.l1Value, s.cost));
+ 
+            item.appendChild(name);
+            item.appendChild(projectCnt);
+            item.appendChild(leads);
+            item.appendChild(roi);
+            el.platformList.appendChild(item);
+          }
+        }
+ 
+        function renderOverview(filteredRows, denomRowsAllChannels) {
+          const agg = buildAggByProjectPeriod(filteredRows);
+          const aggDenomAllChannels = buildAggByProjectPeriod(denomRowsAllChannels);
+          const periodsByProject = selectedPeriodNumsByProject();
+
+          const items = [];
+          for (const p of PROJECTS) {
+            const nums = periodsByProject.get(p) || [];
+            for (const n of nums) {
+              items.push({ project: p, periodNum: n });
+            }
+          }
+
+          const groups = PROJECTS.map((p) => {
+            const nums = periodsByProject.get(p) || [];
+            return {
+              group: p,
+              items: nums.map((n) => {
+                const key = String(p) + "|" + String(n);
+                const v = agg.get(key) || { cost: 0, leads: 0, l1Orders: 0, l1Value: 0 };
+                const dAll = aggDenomAllChannels.get(key) || { leads: 0 };
+                const cost = asNum(v.cost);
+                const leads = asNum(v.leads);
+                const adds = asNum(v.adds);
+                const l1Orders = asNum(v.l1Orders);
+                const l1Value = asNum(v.l1Value);
+                const denom = asNum(dAll.leads);
+                return {
+                  periodNum: n,
+                  label: String(n) + "期",
+                  color: COLORS_BY_PROJECT[p] || "#38bdf8",
+                  roi: safeDiv(l1Value, cost),
+                  addValue: safeDiv(l1Value, adds),
+                  cac: safeDiv(cost, leads),
+                  conv: safeDiv(l1Orders, adds) * 100,
+                  share: denom ? (leads / denom) * 100 : 0,
+                  addRate: safeDiv(adds, leads) * 100,
+                };
+              }),
+            };
+          }).filter((g) => g.items.length);
+
+          drawGroupedBarChart(el.ovROI, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.roi, color: it.color })) })),
+            formatter: (v) => fmt2(v),
+          });
+          drawGroupedBarChart(el.ovAddValue, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.addValue, color: it.color })) })),
+            formatter: (v) => fmt2(v),
+          });
+          drawGroupedBarChart(el.ovLeadShare, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.share, color: it.color })) })),
+            formatter: (v) => fmtPct1(v),
+          });
+          drawGroupedBarChart(el.ovCAC, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.cac, color: it.color })) })),
+            formatter: (v) => fmt2(v),
+          });
+          drawGroupedBarChart(el.ovConv, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.conv, color: it.color })) })),
+            formatter: (v) => fmtPct1(v),
+          });
+          drawGroupedBarChart(el.ovAddRate, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.addRate, color: it.color })) })),
+            formatter: (v) => fmtPct1(v),
+          });
+
+          const total = filteredRows.reduce(
+            (acc, r) => {
+              acc.cost += asNum(r.cost);
+              acc.leads += asNum(r.leads);
+              acc.adds += asNum(r.adds);
+              acc.l1Orders += asNum(r.l1Orders);
+              acc.l1Value += asNum(r.l1Value);
+              return acc;
+            },
+            { cost: 0, leads: 0, adds: 0, l1Orders: 0, l1Value: 0 }
+          );
+          el.overviewMeta.textContent = `总获客量=${fmtInt(total.leads)}｜总成本=${fmtInt(total.cost)}｜总ROI=${fmt2(safeDiv(total.l1Value, total.cost))}｜总转率=${fmtPct1(safeDiv(total.l1Orders, total.adds) * 100)}`;
+        }
+ 
+        function renderPlatformDetail(filteredRows, denomRowsAllChannels) {
+          const base = filteredRows.filter((r) => r.platform === state.platform);
+          if (!base.length) {
+            setEmptyHint(el.rightEmptyHint, "当前筛选条件下该平台无数据（可选择其他平台）");
+            el.activePlatformLabel.textContent = "";
+            el.platformMeta.innerHTML = "";
+            drawGroupedBarChart(el.plROI, { groups: [], formatter: (v) => fmt2(v) });
+            drawGroupedBarChart(el.plAddValue, { groups: [], formatter: (v) => fmt2(v) });
+            drawGroupedBarChart(el.plLeadShare, { groups: [], formatter: (v) => fmtPct1(v) });
+            drawGroupedBarChart(el.plCAC, { groups: [], formatter: (v) => fmt2(v) });
+            drawGroupedBarChart(el.plConv, { groups: [], formatter: (v) => fmtPct1(v) });
+            drawGroupedBarChart(el.plAddRate, { groups: [], formatter: (v) => fmtPct1(v) });
+            return;
+          }
+          setEmptyHint(el.rightEmptyHint, "");
+          el.activePlatformLabel.textContent = state.platform;
+ 
+          const aggNum = buildAggByProjectPeriod(base);
+          const aggDenomAllChannels = buildAggByProjectPeriod(denomRowsAllChannels);
+          const periodsByProject = selectedPeriodNumsByProject();
+
+          const groups = PROJECTS.map((p) => {
+            const nums = periodsByProject.get(p) || [];
+            return {
+              group: p,
+              items: nums.map((n) => {
+                const key = String(p) + "|" + String(n);
+                const v = aggNum.get(key) || { cost: 0, leads: 0, l1Orders: 0, l1Value: 0 };
+                const d = aggDenomAllChannels.get(key) || { leads: 0 };
+                const cost = asNum(v.cost);
+                const leads = asNum(v.leads);
+                const denomLeads = asNum(d.leads);
+                const adds = asNum(v.adds);
+                const l1Orders = asNum(v.l1Orders);
+                const l1Value = asNum(v.l1Value);
+                return {
+                  label: String(n) + "期",
+                  color: COLORS_BY_PROJECT[p] || "#38bdf8",
+                  roi: safeDiv(l1Value, cost),
+                  addValue: safeDiv(l1Value, adds),
+                  cac: safeDiv(cost, leads),
+                  conv: safeDiv(l1Orders, adds) * 100,
+                  share: denomLeads ? (leads / denomLeads) * 100 : 0,
+                  addRate: safeDiv(adds, leads) * 100,
+                };
+              }),
+            };
+          }).filter((g) => g.items.length);
+
+          drawGroupedBarChart(el.plROI, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.roi, color: it.color })) })),
+            formatter: (v) => fmt2(v),
+          });
+          drawGroupedBarChart(el.plAddValue, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.addValue, color: it.color })) })),
+            formatter: (v) => fmt2(v),
+          });
+          drawGroupedBarChart(el.plLeadShare, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.share, color: it.color })) })),
+            formatter: (v) => fmtPct1(v),
+          });
+          drawGroupedBarChart(el.plCAC, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.cac, color: it.color })) })),
+            formatter: (v) => fmt2(v),
+          });
+          drawGroupedBarChart(el.plConv, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.conv, color: it.color })) })),
+            formatter: (v) => fmtPct1(v),
+          });
+          drawGroupedBarChart(el.plAddRate, {
+            groups: groups.map((g) => ({ group: g.group, items: g.items.map((it) => ({ label: it.label, value: it.addRate, color: it.color })) })),
+            formatter: (v) => fmtPct1(v),
+          });
+
+          const tot = base.reduce(
+            (acc, r) => {
+              acc.cost += asNum(r.cost);
+              acc.leads += asNum(r.leads);
+              acc.adds += asNum(r.adds);
+              acc.l1Orders += asNum(r.l1Orders);
+              acc.l1Value += asNum(r.l1Value);
+              return acc;
+            },
+            { cost: 0, leads: 0, adds: 0, l1Orders: 0, l1Value: 0 }
+          );
+          el.platformMeta.innerHTML = [
+            `<div class="k">总获客量</div><div>${fmtInt(tot.leads)}</div>`,
+            `<div class="k">总成本</div><div>${fmtInt(tot.cost)}</div>`,
+            `<div class="k">总ROI</div><div>${fmt2(safeDiv(tot.l1Value, tot.cost))}</div>`,
+            `<div class="k">总转率</div><div>${fmtPct1(safeDiv(tot.l1Orders, tot.adds) * 100)}</div>`,
+          ].join("");
+        }
+
+        function renderStructure(allRowsAllChannels) {
+          if (!el.structTableOverall) return;
+
+          const zeros = { cost: 0, leads: 0, adds: 0, l1Orders: 0, l1Value: 0 };
+          const totalByProject = new Map();
+          const stdByProject = new Map();
+          const nonByProject = new Map();
+
+          function addTo(map, p, r) {
+            if (!map.has(p)) map.set(p, { ...zeros });
+            const v = map.get(p);
+            v.cost += asNum(r.cost);
+            v.leads += asNum(r.leads);
+            v.adds += asNum(r.adds);
+            v.l1Orders += asNum(r.l1Orders);
+            v.l1Value += asNum(r.l1Value);
+          }
+
+          for (const r of allRowsAllChannels) {
+            if (PROJECTS.length && !PROJECTS.includes(r.project)) continue;
+            const p = r.project;
+            addTo(totalByProject, p, r);
+            if (r.channelBucket === "标准渠道") addTo(stdByProject, p, r);
+            else if (r.channelBucket === "非标渠道") addTo(nonByProject, p, r);
+          }
+
+          const periodsByProject = selectedPeriodNumsByProject();
+
+          const head = [
+            `<div class="tHead">`,
+            `<div class="tCell">项目</div>`,
+            `<div class="tCell tNum">营期数</div>`,
+            `<div class="tCell tNum">ROI</div>`,
+            `<div class="tCell tNum">获客成本</div>`,
+            `<div class="tCell tNum">添加产值</div>`,
+            `<div class="tCell tNum">转率</div>`,
+            `<div class="tCell tNum">总获客量</div>`,
+            `<div class="tCell tNum">获客占比</div>`,
+            `<div class="tCell tNum">总添加数</div>`,
+            `<div class="tCell tNum">添加率</div>`,
+            `</div>`,
+          ].join("");
+
+          function labelMode(mode) {
+            if (mode === "standard") return "标准";
+            if (mode === "nonstandard") return "非标";
+            return "整体";
+          }
+
+          function renderTable(targetEl, mode) {
+            const vals = PROJECTS.map((p) => {
+              const total = totalByProject.get(p) || zeros;
+              const std = stdByProject.get(p) || zeros;
+              const non = nonByProject.get(p) || zeros;
+              let view = total;
+              if (mode === "standard") view = std;
+              if (mode === "nonstandard") view = non;
+              return {
+                project: p,
+                roi: safeDiv(view.l1Value, view.cost),
+                cac: safeDiv(view.cost, view.leads),
+                addValue: safeDiv(view.l1Value, view.adds),
+                conv: safeDiv(view.l1Orders, view.adds) * 100,
+                addRate: safeDiv(view.adds, view.leads) * 100,
+              };
+            });
+
+            function rangeOf(key) {
+              let minV = Infinity;
+              let maxV = -Infinity;
+              for (const it of vals) {
+                const v = asNum(it[key]);
+                if (v < minV) minV = v;
+                if (v > maxV) maxV = v;
+              }
+              if (minV === Infinity) minV = 0;
+              if (maxV === -Infinity) maxV = 0;
+              return { min: minV, max: maxV };
+            }
+
+            const rRoi = rangeOf("roi");
+            const rCac = rangeOf("cac");
+            const rAddValue = rangeOf("addValue");
+            const rConv = rangeOf("conv");
+            const rAddRate = rangeOf("addRate");
+            const EPS = 1e-9;
+
+            function clsHigherBetter(v, range) {
+              if (Math.abs(range.max - range.min) < EPS) return "";
+              if (Math.abs(v - range.max) < EPS) return "hi";
+              if (Math.abs(v - range.min) < EPS) return "lo";
+              return "";
+            }
+
+            function clsLowerBetter(v, range) {
+              if (Math.abs(range.max - range.min) < EPS) return "";
+              if (Math.abs(v - range.min) < EPS) return "hi";
+              if (Math.abs(v - range.max) < EPS) return "lo";
+              return "";
+            }
+
+            function mark(text, klass) {
+              if (!klass) return String(text);
+              return `<span class="mark ${klass}">${String(text)}</span>`;
+            }
+
+            const rowsHtml = PROJECTS.map((p) => {
+              const total = totalByProject.get(p) || zeros;
+              const std = stdByProject.get(p) || zeros;
+              const non = nonByProject.get(p) || zeros;
+              const periodCnt = (periodsByProject.get(p) || []).length;
+
+              let view = total;
+              if (mode === "standard") view = std;
+              if (mode === "nonstandard") view = non;
+
+              const roi = safeDiv(view.l1Value, view.cost);
+              const cac = safeDiv(view.cost, view.leads);
+              const addValue = safeDiv(view.l1Value, view.adds);
+              const conv = safeDiv(view.l1Orders, view.adds) * 100;
+              const addRate = safeDiv(view.adds, view.leads) * 100;
+              const roiK = clsHigherBetter(roi, rRoi);
+              const addValueK = clsHigherBetter(addValue, rAddValue);
+              const convK = clsHigherBetter(conv, rConv);
+              const addRateK = clsHigherBetter(addRate, rAddRate);
+              const cacK = clsLowerBetter(cac, rCac);
+
+              let share = 0;
+              if (mode === "overall") {
+                share = asNum(total.leads) > 0 ? 100 : 0;
+              } else if (mode === "standard") {
+                share = asNum(total.leads) ? (asNum(std.leads) / asNum(total.leads)) * 100 : 0;
+              } else {
+                share = asNum(total.leads) ? (asNum(non.leads) / asNum(total.leads)) * 100 : 0;
+              }
+
+              return [
+                `<div class="tRow">`,
+                `<div class="tCell"><button type="button" class="linkBtn" data-struct-project="${String(p)}" data-struct-mode="${String(mode)}">${p}</button></div>`,
+                `<div class="tCell tNum">${fmtInt(periodCnt)}</div>`,
+                `<div class="tCell tNum">${mark(fmt2(roi), roiK)}</div>`,
+                `<div class="tCell tNum">${mark(fmt2(cac), cacK)}</div>`,
+                `<div class="tCell tNum">${mark(fmt2(addValue), addValueK)}</div>`,
+                `<div class="tCell tNum">${mark(fmtPct1(conv), convK)}</div>`,
+                `<div class="tCell tNum">${fmtInt(view.leads)}</div>`,
+                `<div class="tCell tNum">${fmtPct1(share)}</div>`,
+                `<div class="tCell tNum">${fmtInt(view.adds)}</div>`,
+                `<div class="tCell tNum">${mark(fmtPct1(addRate), addRateK)}</div>`,
+                `</div>`,
+              ].join("");
+            }).join("");
+
+            targetEl.innerHTML = head + rowsHtml;
+            targetEl.onclick = (e) => {
+              const btn = e.target && e.target.closest ? e.target.closest("button[data-struct-project]") : null;
+              if (!btn) return;
+              const project = btn.getAttribute("data-struct-project") || "";
+              const m = btn.getAttribute("data-struct-mode") || "overall";
+              state.structDrillProject = project;
+              state.structDrillMode = m;
+              renderAll();
+            };
+          }
+
+          renderTable(el.structTableOverall, "overall");
+          renderTable(el.structTableStd, "standard");
+          renderTable(el.structTableNon, "nonstandard");
+
+          const shareItems = PROJECTS.map((p) => {
+            const total = totalByProject.get(p) || zeros;
+            const std = stdByProject.get(p) || zeros;
+            const non = nonByProject.get(p) || zeros;
+            const denom = asNum(total.leads);
+            const stdShare = denom ? (asNum(std.leads) / denom) * 100 : 0;
+            const nonShare = denom ? (asNum(non.leads) / denom) * 100 : 0;
+            return {
+              group: p,
+              segs: [
+                { label: "标准", value: stdShare, color: STRUCT_BUCKETS[0].color },
+                { label: "非标", value: nonShare, color: STRUCT_BUCKETS[1].color },
+              ],
+            };
+          });
+          drawStackedBarChart(el.structShare, {
+            items: shareItems,
+            formatter: (v) => fmtPct1(v),
+          });
+
+          const groupsROI = PROJECTS.map((p) => {
+            const std = stdByProject.get(p) || zeros;
+            const non = nonByProject.get(p) || zeros;
+            return {
+              group: p,
+              items: [
+                { label: "标准", value: safeDiv(std.l1Value, std.cost), color: STRUCT_BUCKETS[0].color },
+                { label: "非标", value: safeDiv(non.l1Value, non.cost), color: STRUCT_BUCKETS[1].color },
+              ],
+            };
+          });
+          drawGroupedBarChart(el.structROI, {
+            groups: groupsROI,
+            formatter: (v) => fmt2(v),
+            showItemLabels: false,
+          });
+
+          const groupsConv = PROJECTS.map((p) => {
+            const std = stdByProject.get(p) || zeros;
+            const non = nonByProject.get(p) || zeros;
+            return {
+              group: p,
+              items: [
+                { label: "标准", value: safeDiv(std.l1Orders, std.adds) * 100, color: STRUCT_BUCKETS[0].color },
+                { label: "非标", value: safeDiv(non.l1Orders, non.adds) * 100, color: STRUCT_BUCKETS[1].color },
+              ],
+            };
+          });
+          drawGroupedBarChart(el.structConv, {
+            groups: groupsConv,
+            formatter: (v) => fmtPct1(v),
+            showItemLabels: false,
+          });
+
+          const groupsCAC = PROJECTS.map((p) => {
+            const std = stdByProject.get(p) || zeros;
+            const non = nonByProject.get(p) || zeros;
+            return {
+              group: p,
+              items: [
+                { label: "标准", value: safeDiv(std.cost, std.leads), color: STRUCT_BUCKETS[0].color },
+                { label: "非标", value: safeDiv(non.cost, non.leads), color: STRUCT_BUCKETS[1].color },
+              ],
+            };
+          });
+          drawGroupedBarChart(el.structCAC, {
+            groups: groupsCAC,
+            formatter: (v) => fmt2(v),
+            showItemLabels: false,
+          });
+
+          const groupsAddValue = PROJECTS.map((p) => {
+            const std = stdByProject.get(p) || zeros;
+            const non = nonByProject.get(p) || zeros;
+            return {
+              group: p,
+              items: [
+                { label: "标准", value: safeDiv(std.l1Value, std.adds), color: STRUCT_BUCKETS[0].color },
+                { label: "非标", value: safeDiv(non.l1Value, non.adds), color: STRUCT_BUCKETS[1].color },
+              ],
+            };
+          });
+          drawGroupedBarChart(el.structAddValue, {
+            groups: groupsAddValue,
+            formatter: (v) => fmt2(v),
+            showItemLabels: false,
+          });
+
+          function renderDrillTable(project, mode) {
+            if (!el.structDrillTable || !el.structDrillTitle || !el.structDrillCard) return;
+            const p = String(project || "");
+            if (!p) {
+              el.structDrillCard.style.display = "none";
+              return;
+            }
+            el.structDrillCard.style.display = "";
+            el.structDrillTitle.textContent = `${p}｜${labelMode(mode)}｜投放平台明细`;
+
+            const byPlat = new Map();
+            let denomOverall = 0;
+            for (const r of allRowsAllChannels) {
+              if (String(r.project) !== p) continue;
+              denomOverall += asNum(r.leads);
+              if (mode === "standard" && r.channelBucket !== "标准渠道") continue;
+              if (mode === "nonstandard" && r.channelBucket !== "非标渠道") continue;
+              const key = String(r.platform || "未知");
+              if (!byPlat.has(key)) byPlat.set(key, { platform: key, periods: new Set(), cost: 0, leads: 0, adds: 0, l1Orders: 0, l1Value: 0 });
+              const v = byPlat.get(key);
+              v.periods.add(asNum(r.periodNum));
+              v.cost += asNum(r.cost);
+              v.leads += asNum(r.leads);
+              v.adds += asNum(r.adds);
+              v.l1Orders += asNum(r.l1Orders);
+              v.l1Value += asNum(r.l1Value);
+            }
+
+            const listRaw = Array.from(byPlat.values()).map((x) => ({ ...x, periodCnt: x.periods ? x.periods.size : 0 }));
+            listRaw.sort((a, b) => b.leads - a.leads || b.l1Value - a.l1Value || String(a.platform).localeCompare(String(b.platform), "zh-CN"));
+            const list = listRaw.map((it) => {
+              const roi = safeDiv(it.l1Value, it.cost);
+              const addValue = safeDiv(it.l1Value, it.adds);
+              const conv = safeDiv(it.l1Orders, it.adds) * 100;
+              return { ...it, roi, addValue, conv };
+            });
+            const denom = denomOverall;
+
+            const head2 = [
+              `<div class="tHead">`,
+              `<div class="tCell">投放平台</div>`,
+              `<div class="tCell tNum">营期数</div>`,
+              `<div class="tCell tNum">ROI</div>`,
+              `<div class="tCell tNum">获客成本</div>`,
+              `<div class="tCell tNum">添加产值</div>`,
+              `<div class="tCell tNum">转率</div>`,
+              `<div class="tCell tNum">总获客量</div>`,
+              `<div class="tCell tNum">获客占比</div>`,
+              `<div class="tCell tNum">总添加数</div>`,
+              `<div class="tCell tNum">添加率</div>`,
+              `</div>`,
+            ].join("");
+
+            function rangeOf(key) {
+              let minV = Infinity;
+              let maxV = -Infinity;
+              for (const it of list) {
+                const v = asNum(it[key]);
+                if (v < minV) minV = v;
+                if (v > maxV) maxV = v;
+              }
+              if (minV === Infinity) minV = 0;
+              if (maxV === -Infinity) maxV = 0;
+              return { min: minV, max: maxV };
+            }
+
+            const roiRange = rangeOf("roi");
+            const addValueRange = rangeOf("addValue");
+            const convRange = rangeOf("conv");
+            const EPS = 1e-9;
+
+            function heat(text, v, range) {
+              const vv = asNum(v);
+              const span = String(text);
+              const denom = range.max - range.min;
+              if (Math.abs(denom) < EPS) return span;
+              const t = Math.max(0, Math.min(1, (vv - range.min) / denom));
+              const hue = 120 * t;
+              const bg = `hsla(${hue}, 72%, 92%, 1)`;
+              const fg = `hsla(${hue}, 40%, 24%, 1)`;
+              return `<span class="mark" style="background:${bg}; color:${fg};">${span}</span>`;
+            }
+
+            function warnIf(text, cond) {
+              const span = String(text);
+              return cond ? `<span class="mark lo">${span}</span>` : span;
+            }
+
+            const rows2 = list.map((it) => {
+              const roi = asNum(it.roi);
+              const cac = safeDiv(it.cost, it.leads);
+              const addValue = asNum(it.addValue);
+              const conv = asNum(it.conv);
+              const addRate = safeDiv(it.adds, it.leads) * 100;
+              const share = denom ? (asNum(it.leads) / denom) * 100 : 0;
+              const r = { roi, addValue, conv };
+              return [
+                `<div class="tRow">`,
+                `<div class="tCell">${String(it.platform)}</div>`,
+                `<div class="tCell tNum">${fmtInt(it.periodCnt)}</div>`,
+                `<div class="tCell tNum">${heat(fmt2(r.roi), r.roi, roiRange)}</div>`,
+                `<div class="tCell tNum">${fmt2(cac)}</div>`,
+                `<div class="tCell tNum">${heat(fmt2(r.addValue), r.addValue, addValueRange)}</div>`,
+                `<div class="tCell tNum">${heat(fmtPct1(r.conv), r.conv, convRange)}</div>`,
+                `<div class="tCell tNum">${fmtInt(it.leads)}</div>`,
+                `<div class="tCell tNum">${fmtPct1(share)}</div>`,
+                `<div class="tCell tNum">${fmtInt(it.adds)}</div>`,
+                `<div class="tCell tNum">${warnIf(fmtPct1(addRate), asNum(addRate) < 60)}</div>`,
+                `</div>`,
+              ].join("");
+            }).join("");
+
+            el.structDrillTable.innerHTML = head2 + rows2;
+          }
+
+          renderDrillTable(state.structDrillProject, state.structDrillMode);
+        }
+ 
+        function renderAll() {
+          const base = applyFiltersBase();
+          const selected = applyFiltersWithPeriods(base);
+          const selectedAllChannels = applyFiltersWithPeriods(applyFiltersAllChannels());
+ 
+          const yearLabel = state.years.size ? `年度=${Array.from(state.years.values()).sort(sortNumDesc).join("，")}` : "年度=全部";
+          const monthLabel = state.months.size ? `月=${Array.from(state.months.values()).sort(sortNumAsc).join("，")}` : "月=全部";
+          const ppLabel = formatProjectPeriodsForScope() || "全部";
+          el.dataStatus.textContent = `数据行=${rows.length}｜聚合行=${rowsRaw.length}｜页签=${state.mainTab === "structure" ? "渠道结构" : state.channelBucket}`;
+          el.dataScope.textContent = `${yearLabel}｜${monthLabel}｜营期=${ppLabel}`;
+          refreshTopTabs();
+          if (state.mainTab === "compare") {
+            renderOverview(selected, selectedAllChannels);
+            renderPlatformList(selected);
+            renderPlatformDetail(selected, selectedAllChannels);
+          } else {
+            renderStructure(selectedAllChannels);
+          }
+        }
+ 
+        function setChannelBucket(bucket, keepMainTab) {
+          if (!keepMainTab) state.mainTab = "compare";
+          state.channelBucket = bucket;
+          refreshTopTabs();
+ 
+          buildYearOptions();
+          buildMonthOptions();
+ 
+          const base = applyFiltersBase();
+          buildProjectPeriodOptions(base);
+ 
+          state.search = "";
+          el.searchInput.value = "";
+          state.platform = "__NONE__";
+          closeAllPanels();
+ 
+          renderAll();
+        }
+ 
+        function init() {
+          el.tabStandard.onclick = () => setChannelBucket("标准渠道", false);
+          el.tabNonStandard.onclick = () => setChannelBucket("非标渠道", false);
+          el.tabStructure.onclick = () => setMainTab("structure");
+ 
+          buildYearOptions();
+          buildMonthOptions();
+ 
+          el.yearMsSearch.oninput = () => {
+            msRuntime.year.search = el.yearMsSearch.value || "";
+            if (typeof msRuntime.year.onChange === "function") refreshYearUI(msRuntime.year.onChange);
+          };
+          el.monthMsSearch.oninput = () => {
+            msRuntime.month.search = el.monthMsSearch.value || "";
+            if (typeof msRuntime.month.onChange === "function") refreshMonthUI(msRuntime.month.onChange);
+          };
+          el.projectPeriodMsSearch.oninput = () => {
+            msRuntime.period.search = el.projectPeriodMsSearch.value || "";
+            if (typeof msRuntime.period.onChange === "function") refreshPeriodUI(msRuntime.period.onChange);
+          };
+
+          el.yearMsSelectAll.onclick = (e) => {
+            e.stopPropagation();
+            for (const opt of msRuntime.year.options || []) {
+              if (optionMatches(opt, msRuntime.year.search)) state.years.add(opt.value);
+            }
+            if (typeof msRuntime.year.onChange === "function") msRuntime.year.onChange();
+          };
+          el.monthMsSelectAll.onclick = (e) => {
+            e.stopPropagation();
+            for (const opt of msRuntime.month.options || []) {
+              if (optionMatches(opt, msRuntime.month.search)) state.months.add(opt.value);
+            }
+            if (typeof msRuntime.month.onChange === "function") msRuntime.month.onChange();
+          };
+          el.projectPeriodMsSelectAll.onclick = (e) => {
+            e.stopPropagation();
+            for (const opt of msRuntime.period.options || []) {
+              if (optionMatches(opt, msRuntime.period.search)) state.projectPeriods.add(opt.value);
+            }
+            if (typeof msRuntime.period.onChange === "function") msRuntime.period.onChange();
+          };
+
+          el.yearMsClear.onclick = (e) => {
+            e.stopPropagation();
+            state.years = new Set();
+            if (typeof msRuntime.year.onChange === "function") msRuntime.year.onChange();
+          };
+          el.monthMsClear.onclick = (e) => {
+            e.stopPropagation();
+            state.months = new Set();
+            if (typeof msRuntime.month.onChange === "function") msRuntime.month.onChange();
+          };
+          el.projectPeriodMsClear.onclick = (e) => {
+            e.stopPropagation();
+            state.projectPeriods = new Set();
+            if (typeof msRuntime.period.onChange === "function") msRuntime.period.onChange();
+          };
+
+          el.yearMsBtn.onclick = (e) => {
+            e.stopPropagation();
+            togglePanel(el.yearMsPanel);
+          };
+          el.monthMsBtn.onclick = (e) => {
+            e.stopPropagation();
+            togglePanel(el.monthMsPanel);
+          };
+          el.projectPeriodMsBtn.onclick = (e) => {
+            e.stopPropagation();
+            togglePanel(el.projectPeriodMsPanel);
+          };
+
+          el.yearMsPanel.onclick = (e) => e.stopPropagation();
+          el.monthMsPanel.onclick = (e) => e.stopPropagation();
+          el.projectPeriodMsPanel.onclick = (e) => e.stopPropagation();
+
+          document.addEventListener("click", () => closeAllPanels());
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closeAllPanels();
+          });
+ 
+          el.searchInput.oninput = () => {
+            state.search = el.searchInput.value || "";
+            renderAll();
+          };
+
+          if (el.structDrillClose) {
+            el.structDrillClose.onclick = () => {
+              state.structDrillProject = "";
+              if (el.structDrillCard) el.structDrillCard.style.display = "none";
+            };
+          }
+ 
+          if (el.projectHint) {
+            const show = PROJECTS.length ? PROJECTS.join(" / ") : "项目：未知";
+            el.projectHint.textContent = "项目：" + show;
+          }
+
+          refreshTopTabs();
+          setChannelBucket("标准渠道", true);
+ 
+          window.addEventListener("resize", () => {
+            renderAll();
+          });
+        }
+ 
+        init();
+      })();
+    </script>
+  </body>
+</html>
